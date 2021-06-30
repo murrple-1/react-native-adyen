@@ -1,9 +1,9 @@
 import React, { useEffect } from 'react'
-import RNModuleTemplateModule, { Counter } from 'react-native-module-template'
+import RNAdyenModule, { Counter } from 'react-native-adyen'
 
 const App = () => {
   useEffect(() => {
-    console.log(RNModuleTemplateModule)
+    console.log(RNAdyenModule)
   })
 
   return <Counter />

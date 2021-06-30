@@ -1,14 +1,14 @@
 //
-//  RNModuleTemplateModule.swift
-//  RNModuleTemplateModule
+//  RNAdyenModule.swift
+//  RNAdyenModule
 //
-//  Copyright © 2021 Alex Demchenko. All rights reserved.
+//  Copyright © 2021 Murray Christopherson. All rights reserved.
 //
 
 import Foundation
 
-@objc(RNModuleTemplateModule)
-class RNModuleTemplateModule: NSObject {
+@objc(RNAdyenModule)
+class RNAdyenModule: NSObject {
   @objc
   func constantsToExport() -> [AnyHashable : Any]! {
     return ["count": 1]
