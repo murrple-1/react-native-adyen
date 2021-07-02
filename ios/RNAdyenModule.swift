@@ -7,6 +7,8 @@
 
 import Foundation
 
+import Adyen
+
 @objc(RNAdyenModule)
 class RNAdyenModule: NSObject {
   @objc

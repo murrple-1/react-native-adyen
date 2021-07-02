@@ -1,6 +1,9 @@
 import UIKit
+
 #if DEBUG
-import FlipperKit
+  #if FB_SONARKIT_ENABLED
+  import FlipperKit
+  #endif
 #endif
 
 @UIApplicationMain
@@ -39,13 +42,15 @@ class AppDelegate: UIResponder, UIApplicationDelegate, RCTBridgeDelegate {
 
   private func initializeFlipper(with application: UIApplication) {
     #if DEBUG
-    let client = FlipperClient.shared()
-    let layoutDescriptionMapper = SKDescriptorMapper(defaults: ())
-    client?.add(FlipperKitLayoutPlugin(rootNode: application, with: layoutDescriptionMapper))
-    client?.add(FKUserDefaultsPlugin(suiteName: nil))
-    client?.add(FlipperKitReactPlugin())
-    client?.add(FlipperKitNetworkPlugin(networkAdapter: SKIOSNetworkAdapter()))
-    client?.start()
+      #if FB_SONARKIT_ENABLED
+      let client = FlipperClient.shared()
+      let layoutDescriptionMapper = SKDescriptorMapper(defaults: ())
+      client?.add(FlipperKitLayoutPlugin(rootNode: application, with: layoutDescriptionMapper))
+      client?.add(FKUserDefaultsPlugin(suiteName: nil))
+      client?.add(FlipperKitReactPlugin())
+      client?.add(FlipperKitNetworkPlugin(networkAdapter: SKIOSNetworkAdapter()))
+      client?.start()
+      #endif
     #endif
   }
 }
