@@ -5,7 +5,7 @@ buildscript {
 
     repositories {
         google()
-        jcenter()
+        mavenCentral()
     }
 
     dependencies {
@@ -33,7 +33,6 @@ android {
 
 repositories {
     google()
-    jcenter()
     mavenCentral()
 }
 
@@ -41,4 +40,6 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib:${safeExtGet('kotlinVersion', '1.5.0')}"
     //noinspection GradleDynamicVersion
     implementation 'com.facebook.react:react-native:+'
+
+    implementation 'com.adyen.checkout:drop-in:4.0.0-beta03'
 }
