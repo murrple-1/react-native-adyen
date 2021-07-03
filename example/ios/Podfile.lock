@@ -1,16 +1,28 @@
 PODS:
-  - Adyen (3.8.5):
-    - Adyen/Card (= 3.8.5)
-    - Adyen/Core (= 3.8.5)
-    - Adyen/DropIn (= 3.8.5)
-  - Adyen/Card (3.8.5):
+  - Adyen (4.0.0):
+    - Adyen/Actions (= 4.0.0)
+    - Adyen/Card (= 4.0.0)
+    - Adyen/Components (= 4.0.0)
+    - Adyen/Core (= 4.0.0)
+    - Adyen/DropIn (= 4.0.0)
+    - Adyen/Encryption (= 4.0.0)
+  - Adyen/Actions (4.0.0):
     - Adyen/Core
-    - Adyen3DS2 (= 2.2.1)
-  - Adyen/Core (3.8.5)
-  - Adyen/DropIn (3.8.5):
+    - Adyen3DS2 (= 2.2.2)
+  - Adyen/Card (4.0.0):
+    - Adyen/Core
+    - Adyen/Encryption
+  - Adyen/Components (4.0.0):
+    - Adyen/Core
+  - Adyen/Core (4.0.0)
+  - Adyen/DropIn (4.0.0):
+    - Adyen/Actions
     - Adyen/Card
+    - Adyen/Components
     - Adyen/Core
-  - Adyen3DS2 (2.2.1)
+    - Adyen/Encryption
+  - Adyen/Encryption (4.0.0)
+  - Adyen3DS2 (2.2.2)
   - boost-for-react-native (1.63.0)
   - CocoaAsyncSocket (7.6.5)
   - DoubleConversion (1.1.6)
@@ -476,8 +488,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon/yoga"
 
 SPEC CHECKSUMS:
-  Adyen: 8fd03b7d3de0e301237089a7fd2d864ca02af270
-  Adyen3DS2: d99e5dea8524fc860751804dd760f6bad032de01
+  Adyen: 31fe5e222c969b1b5fea06d4c3d6b2988db64100
+  Adyen3DS2: 98e8f8759f1bd16a6f609f21e3eaa9f66f38d1c6
   boost-for-react-native: 39c7adb57c4e60d6c5479dd8623128eb5b3f0f2c
   CocoaAsyncSocket: 065fd1e645c7abab64f7a6a2007a48038fdc6a99
   DoubleConversion: cf9b38bf0b2d048436d9a82ad2abe1404f11e7de
@@ -504,7 +516,7 @@ SPEC CHECKSUMS:
   React-jsi: 67747b9722f6dab2ffe15b011bcf6b3f2c3f1427
   React-jsiexecutor: 80c46bd381fd06e418e0d4f53672dc1d1945c4c3
   React-jsinspector: cc614ec18a9ca96fd275100c16d74d62ee11f0ae
-  react-native-adyen: 6afbf727bf55ec5e225a2138c0c60d98d64f168f
+  react-native-adyen: 74d856b984aec255bf17fb0b659daf38c2b064c8
   React-perflogger: 25373e382fed75ce768a443822f07098a15ab737
   React-RCTActionSheet: af7796ba49ffe4ca92e7277a5d992d37203f7da5
   React-RCTAnimation: 6a2e76ab50c6f25b428d81b76a5a45351c4d77aa
@@ -520,6 +532,6 @@ SPEC CHECKSUMS:
   Yoga: 575c581c63e0d35c9a83f4b46d01d63abc1100ac
   YogaKit: f782866e155069a2cca2517aafea43200b01fd5a
 
-PODFILE CHECKSUM: 870f4ec950d9fe950621c2bb0b9681f36415e8e0
+PODFILE CHECKSUM: 7071a19ea49ae9315a8fb0856e8d242e336de4a9
 
 COCOAPODS: 1.10.1

@@ -10,7 +10,7 @@ Pod::Spec.new do |s|
 
   s.authors      = package['author']
   s.homepage     = package['homepage']
-  s.platform     = :ios, "10.0"
+  s.platform     = :ios, "12.0"
 
   s.source       = { :git => "https://github.com/murrple-1/react-native-adyen.git", :tag => "v#{s.version}" }
   s.source_files  = "ios/**/*.{h,m,swift}"
