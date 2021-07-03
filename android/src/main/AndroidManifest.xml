@@ -1,2 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.murraychristopherson.reactnativeadyen"></manifest>
+    package="com.murraychristopherson.reactnativeadyen">
+    <application>
+        <service
+            android:name=".DropInServiceImpl"
+            android:permission="android.permission.BIND_JOB_SERVICE"/>
+    </application>
+</manifest>
