@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from 'react';
 
-import { View, Button, Alert } from 'react-native';
+import { Button, Alert, SafeAreaView } from 'react-native';
 
 import { _getPaymentMethods } from 'react-native-adyen';
 
@@ -29,7 +29,7 @@ const App = () => {
   }, []);
 
   return (
-    <View>
+    <SafeAreaView>
       <Button
         title="Initiate Payment"
         disabled={isLoading}
@@ -37,7 +37,7 @@ const App = () => {
       >
         Initial Payment
       </Button>
-    </View>
+    </SafeAreaView>
   );
 };
 
