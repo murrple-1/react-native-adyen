@@ -11,7 +11,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate, RCTBridgeDelegate {
 
     var window: UIWindow?
 
-    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+    func application(
+        _ application: UIApplication,
+        didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         initializeFlipper(with: application)
 
         let bridge = RCTBridge(delegate: self, launchOptions: launchOptions)

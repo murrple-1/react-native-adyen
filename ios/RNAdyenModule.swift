@@ -19,7 +19,7 @@ class RNAdyenModule: NSObject, DropInComponentDelegate {
     }
 
     @objc
-    func startPayment(_ paymentMethodsJson: NSDictionary, _ clientKey: NSString) throws {
+    func startPayment(_ paymentMethodsJson: NSDictionary, _ clientKey: NSString, resolver resolve: RCTPromiseResolveBlock, rejecter reject: RCTPromiseRejectBlock) throws {
         let jsonData = try! JSONSerialization.data(withJSONObject: paymentMethodsJson)
         let paymentMethods = try! JSONDecoder().decode(PaymentMethods.self, from: jsonData)
         let apiContext = APIContext(environment: Environment.test, clientKey: clientKey as String)
