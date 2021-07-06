@@ -19,16 +19,25 @@ class RNAdyenModule: NSObject, DropInComponentDelegate {
     }
 
     @objc
-    func startPayment(_ paymentMethodsJson: NSDictionary, _ clientKey: NSString, resolver resolve: RCTPromiseResolveBlock, rejecter reject: RCTPromiseRejectBlock) throws {
-        let jsonData = try! JSONSerialization.data(withJSONObject: paymentMethodsJson)
-        let paymentMethods = try! JSONDecoder().decode(PaymentMethods.self, from: jsonData)
-        let apiContext = APIContext(environment: Environment.test, clientKey: clientKey as String)
-        let configuration = DropInComponent.Configuration(apiContext: apiContext)
+    func startPayment(
+        _ paymentMethodsJson: NSDictionary,
+        _ clientKey: NSString,
+        resolver resolve: RCTPromiseResolveBlock,
+        rejecter reject: RCTPromiseRejectBlock
+    ) throws {
+        do {
+            let jsonData = try JSONSerialization.data(withJSONObject: paymentMethodsJson)
+            let paymentMethods = try JSONDecoder().decode(PaymentMethods.self, from: jsonData)
+            let apiContext = APIContext(environment: Environment.test, clientKey: clientKey as String)
+            let configuration = DropInComponent.Configuration(apiContext: apiContext)
 
-        let dropInComponent = DropInComponent(paymentMethods: paymentMethods, configuration: configuration)
-        dropInComponent.delegate = self
+            let dropInComponent = DropInComponent(paymentMethods: paymentMethods, configuration: configuration)
+            dropInComponent.delegate = self
 
-        RCTPresentedViewController()?.present(dropInComponent.viewController, animated: true, completion: nil)
+            RCTPresentedViewController()?.present(dropInComponent.viewController, animated: true, completion: nil)
+        } catch let error {
+            throw error
+        }
     }
 
     func didSubmit(_ data: PaymentComponentData, for paymentMethod: PaymentMethod, from component: DropInComponent) {
