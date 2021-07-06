@@ -1,16 +1,16 @@
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useState } from 'react';
 
-import { View, Button, Alert } from 'react-native'
+import { View, Button, Alert } from 'react-native';
 
-import { _getPaymentMethods } from 'react-native-adyen'
+import { _getPaymentMethods } from 'react-native-adyen';
 
-import { environment } from './environment'
+import { environment } from './environment';
 
 const App = () => {
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(false);
 
   const onStartPaymentPress = useCallback(() => {
-    setIsLoading(true)
+    setIsLoading(true);
 
     _getPaymentMethods(
       environment.adyenHost,
@@ -18,27 +18,27 @@ const App = () => {
       environment.merchantAccount,
       environment.countryCode,
       environment.amount,
-      environment.shopperReference
+      environment.shopperReference,
     )
-      .then((response) => {
-        Alert.alert('Response', JSON.stringify(response))
+      .then(response => {
+        Alert.alert('Response', JSON.stringify(response));
       })
       .finally(() => {
-        setIsLoading(false)
-      })
-  }, [])
+        setIsLoading(false);
+      });
+  }, []);
 
   return (
     <View>
       <Button
-        title='Initiate Payment'
+        title="Initiate Payment"
         disabled={isLoading}
         onPress={onStartPaymentPress}
       >
         Initial Payment
       </Button>
     </View>
-  )
-}
+  );
+};
 
-export default App
+export default App;

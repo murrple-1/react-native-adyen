@@ -1,4 +1,4 @@
-import { IEnvironment } from './ienvironment'
+import { IEnvironment } from './ienvironment';
 
 export const environment: IEnvironment = {
   adyenHost: '<ADYEN_HOST>',
@@ -9,4 +9,4 @@ export const environment: IEnvironment = {
   shopperReference: undefined,
 
   apiKey: '<API_KEY>',
-}
+};
