@@ -1,18 +1,15 @@
 package com.murraychristopherson.reactnativeadyen
 
 import android.content.Intent
-
-import org.json.JSONObject
-
 import com.adyen.checkout.components.model.PaymentMethodsApiResponse
 import com.adyen.checkout.dropin.DropIn
 import com.adyen.checkout.dropin.DropInConfiguration
-
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactContextBaseJavaModule
 import com.facebook.react.bridge.ReactMethod
+import org.json.JSONObject
 
-class RNAdyenModule(private var reactContext: ReactApplicationContext): ReactContextBaseJavaModule(reactContext) {
+class RNAdyenModule(private var reactContext: ReactApplicationContext) : ReactContextBaseJavaModule(reactContext) {
     override fun getName() = "RNAdyenModule"
 
     // TODO remove
@@ -29,10 +26,9 @@ class RNAdyenModule(private var reactContext: ReactApplicationContext): ReactCon
             val resultIntent = Intent(reactContext, activity::class.java)
             resultIntent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
 
-            val dropInConfiguration = DropInConfiguration.Builder(reactContext,  DropInServiceImpl::class.java, clientKey).build()
+            val dropInConfiguration = DropInConfiguration.Builder(reactContext, DropInServiceImpl::class.java, clientKey).build()
 
             DropIn.startPayment(activity, paymentMethodsApiResponse, dropInConfiguration, resultIntent)
         }
-
     }
 }

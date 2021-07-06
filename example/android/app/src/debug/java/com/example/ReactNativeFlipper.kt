@@ -35,12 +35,12 @@ object ReactNativeFlipper {
             val reactContext = reactInstanceManager.currentReactContext
             if (reactContext == null) {
                 reactInstanceManager.addReactInstanceEventListener(
-                        object : ReactInstanceEventListener {
-                            override fun onReactContextInitialized(reactContext: ReactContext) {
-                                reactInstanceManager.removeReactInstanceEventListener(this)
-                                reactContext.runOnNativeModulesQueueThread { client.addPlugin(FrescoFlipperPlugin()) }
-                            }
-                        })
+                    object : ReactInstanceEventListener {
+                        override fun onReactContextInitialized(reactContext: ReactContext) {
+                            reactInstanceManager.removeReactInstanceEventListener(this)
+                            reactContext.runOnNativeModulesQueueThread { client.addPlugin(FrescoFlipperPlugin()) }
+                        }
+                    })
             } else {
                 client.addPlugin(FrescoFlipperPlugin())
             }

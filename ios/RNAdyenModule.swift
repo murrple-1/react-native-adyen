@@ -13,18 +13,18 @@ import Adyen
 
 @objc(RNAdyenModule)
 class RNAdyenModule: NSObject, DropInComponentDelegate {
-  // TODO remove
-  @objc
-  func constantsToExport() -> [AnyHashable : Any]! {
-    return ["count": 1]
-  }
+    // TODO remove
+    @objc
+    func constantsToExport() -> [AnyHashable: Any]! {
+        return ["count": 1]
+    }
 
-  @objc
-  static func requiresMainQueueSetup() -> Bool {
-    return true
-  }
+    @objc
+    static func requiresMainQueueSetup() -> Bool {
+        return true
+    }
 
-  @objc
+    @objc
     func startPayment(_ paymentMethodsJson: NSDictionary, _ clientKey: NSString) throws {
         let jsonData = try! JSONSerialization.data(withJSONObject: paymentMethodsJson)
         let paymentMethods = try! JSONDecoder().decode(PaymentMethods.self, from: jsonData)

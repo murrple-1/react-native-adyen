@@ -2,8 +2,7 @@ package com.example
 
 import android.app.Application
 import android.content.Context
-import com.murraychristopherson.reactnativeadyen.RNAdyenPackage
-import com.facebook.react.*
+import com.facebook.react.* // wildcard import required, otherwise app crashes. not sure why, but worth investigating
 import com.facebook.soloader.SoLoader
 import java.lang.reflect.InvocationTargetException
 
@@ -43,8 +42,8 @@ class MainApplication : Application(), ReactApplication {
                 try {
                     val aClass = Class.forName("com.example.ReactNativeFlipper")
                     aClass
-                            .getMethod("initializeFlipper", Context::class.java, ReactInstanceManager::class.java)
-                            .invoke(null, context, reactInstanceManager)
+                        .getMethod("initializeFlipper", Context::class.java, ReactInstanceManager::class.java)
+                        .invoke(null, context, reactInstanceManager)
                 } catch (e: ClassNotFoundException) {
                     e.printStackTrace()
                 } catch (e: NoSuchMethodException) {
