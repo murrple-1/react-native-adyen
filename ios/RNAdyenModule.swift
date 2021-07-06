@@ -13,12 +13,6 @@ import Adyen
 
 @objc(RNAdyenModule)
 class RNAdyenModule: NSObject, DropInComponentDelegate {
-    // TODO remove
-    @objc
-    func constantsToExport() -> [AnyHashable: Any]! {
-        return ["count": 1]
-    }
-
     @objc
     static func requiresMainQueueSetup() -> Bool {
         return true

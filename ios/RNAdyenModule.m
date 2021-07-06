@@ -8,5 +8,5 @@
 #import <React/RCTBridgeModule.h>
 
 @interface RCT_EXTERN_MODULE(RNAdyenModule, NSObject)
-RCT_EXTERN_METHOD(startPayment:(NSDictionary *)paymentMethodsJson clientKey:(NSString *)clientKey)
+RCT_EXTERN_METHOD(startPayment:(NSDictionary *)paymentMethodsJson clientKey:(NSString *)clientKey resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
 @end
