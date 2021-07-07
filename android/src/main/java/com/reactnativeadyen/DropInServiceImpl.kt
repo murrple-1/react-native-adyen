@@ -1,4 +1,4 @@
-package com.murraychristopherson.reactnativeadyen
+package com.reactnativeadyen
 
 import com.adyen.checkout.dropin.service.DropInService
 import com.adyen.checkout.dropin.service.DropInServiceResult

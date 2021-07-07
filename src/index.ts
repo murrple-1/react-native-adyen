@@ -2,20 +2,60 @@ import { NativeModules } from 'react-native';
 
 const { RNAdyenModule } = NativeModules;
 
-export type PaymentMethods = Record<string, unknown>;
+// from https://docs.adyen.com/account/supported-currencies
+export type CurrencyType =
+  | 'AUD'
+  | 'USD'
+  | 'BRL'
+  | 'CAD'
+  | 'CHF'
+  | 'CZK'
+  | 'DKK'
+  | 'EUR'
+  | 'GBP'
+  | 'HKD'
+  | 'HRK'
+  | 'HUF'
+  | 'ILS'
+  | 'JPY'
+  | 'MXN'
+  | 'NOK'
+  | 'NZD'
+  | 'PLN'
+  | 'RON'
+  | 'RUB'
+  | 'SEK'
+  | 'SGD'
+  | 'THB'
+  | 'TRY'
+  | 'ZAR'
+  | 'INR'
+  | 'MYR';
+
 export interface Amount {
-  currency: string;
+  currency: CurrencyType;
   value: number;
 }
 
-export async function _getPaymentMethods(
-  adyenCheckoutHost: string,
-  apiKey: string,
-  merchantAccount: string,
-  countryCode: string | undefined,
-  amount: Amount | undefined,
-  shopperReference: string | undefined,
-) {
+export type Environment = 'test' | 'europe' | 'united_states' | 'australia';
+
+export interface _GetPaymentMethodsJsonStrOptions {
+  adyenCheckoutHost: string;
+  apiKey: string;
+  merchantAccount: string;
+  countryCode?: string;
+  amount?: Amount;
+  shopperReference?: string;
+}
+
+export async function _getPaymentMethodsJsonStr({
+  adyenCheckoutHost,
+  apiKey,
+  merchantAccount,
+  countryCode,
+  amount,
+  shopperReference,
+}: _GetPaymentMethodsJsonStrOptions) {
   const response = await fetch(`${adyenCheckoutHost}/v67/paymentMethods`, {
     headers: {
       'Content-Type': 'application/json',
@@ -29,17 +69,21 @@ export async function _getPaymentMethods(
     }),
     method: 'POST',
   });
-  const json = await response.json();
-  if (json) {
-    return json as PaymentMethods;
-  } else {
-    throw new Error('bad response');
-  }
+  return await response.text();
 }
 
-export async function startPayment(
-  paymentMethods: PaymentMethods,
-  clientKey: string,
-) {
-  return await RNAdyenModule.startPayment(paymentMethods, clientKey);
+export interface StartPaymentOptions {
+  paymentMethodsJsonStr: string;
+  clientKey: string;
+  environment: Environment;
+  amount: Amount;
+  locale?: string;
+  cardOptions?: {};
+}
+
+export async function startPayment(options: StartPaymentOptions) {
+  const checkoutResponse = (await RNAdyenModule.startPayment(
+    options,
+  )) as string;
+  return checkoutResponse;
 }

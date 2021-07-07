@@ -5,7 +5,10 @@ export const environment: IEnvironment = {
   clientKey: '<CLIENT_KEY>',
   merchantAccount: '<MERCHANT_ACCOUNT>',
   countryCode: undefined,
-  amount: undefined,
+  amount: {
+    currency: 'USD',
+    value: 100,
+  },
   shopperReference: undefined,
 
   apiKey: '<API_KEY>',

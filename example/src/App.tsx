@@ -2,7 +2,7 @@ import React, { useCallback, useState } from 'react';
 
 import { Button, Alert, SafeAreaView } from 'react-native';
 
-import { _getPaymentMethods } from 'react-native-adyen';
+import { _getPaymentMethodsJsonStr, startPayment } from 'react-native-adyen';
 
 import { environment } from './environment';
 
@@ -12,16 +12,23 @@ const App = () => {
   const onStartPaymentPress = useCallback(() => {
     setIsLoading(true);
 
-    _getPaymentMethods(
-      environment.adyenHost,
-      environment.apiKey,
-      environment.merchantAccount,
-      environment.countryCode,
-      environment.amount,
-      environment.shopperReference,
-    )
-      .then(response => {
-        Alert.alert('Response', JSON.stringify(response));
+    _getPaymentMethodsJsonStr({
+      adyenCheckoutHost: environment.adyenHost,
+      apiKey: environment.apiKey,
+      merchantAccount: environment.merchantAccount,
+      countryCode: environment.countryCode,
+      amount: environment.amount,
+      shopperReference: environment.shopperReference,
+    })
+      .then(async paymentMethodsJsonStr => {
+        const checkoutResponse = await startPayment({
+          paymentMethodsJsonStr,
+          clientKey: environment.clientKey,
+          environment: 'test',
+          amount: environment.amount,
+          cardOptions: {},
+        });
+        Alert.alert('Response', JSON.stringify(checkoutResponse));
       })
       .finally(() => {
         setIsLoading(false);

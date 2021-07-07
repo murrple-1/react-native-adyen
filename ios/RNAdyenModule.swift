@@ -20,8 +20,7 @@ class RNAdyenModule: NSObject, DropInComponentDelegate {
 
     @objc
     func startPayment(
-        _ paymentMethodsJson: NSDictionary,
-        _ clientKey: NSString,
+        _ options: NSDictionary,
         resolver resolve: RCTPromiseResolveBlock,
         rejecter reject: RCTPromiseRejectBlock
     ) throws {

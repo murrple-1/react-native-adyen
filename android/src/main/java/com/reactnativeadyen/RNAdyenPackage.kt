@@ -1,4 +1,4 @@
-package com.murraychristopherson.reactnativeadyen
+package com.reactnativeadyen
 
 import com.facebook.react.ReactPackage
 import com.facebook.react.bridge.NativeModule
