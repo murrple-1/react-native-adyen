@@ -3,13 +3,13 @@ package com.reactnativeadyen
 import android.app.Activity
 import android.content.Intent
 import com.adyen.checkout.card.CardConfiguration
-import com.adyen.checkout.googlepay.GooglePayConfiguration
 import com.adyen.checkout.components.model.PaymentMethodsApiResponse
 import com.adyen.checkout.components.model.payments.Amount
 import com.adyen.checkout.core.api.Environment
 import com.adyen.checkout.dropin.DropIn
 import com.adyen.checkout.dropin.DropInConfiguration
 import com.adyen.checkout.dropin.DropInResult
+import com.adyen.checkout.googlepay.GooglePayConfiguration
 import com.facebook.react.bridge.*
 import java.util.Locale
 import org.json.JSONObject

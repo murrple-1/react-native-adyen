@@ -12,6 +12,9 @@ fi
 
 if command -v swiftlint; then
     swiftlint lint --format --fix
+    cd example/
+    swiftlint lint --format --fix
+    cd ../
 else
     echo "Install swiftlint (https://github.com/realm/SwiftLint) to lint Swift code"
 fi
