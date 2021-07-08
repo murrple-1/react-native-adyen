@@ -17,6 +17,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate, RCTBridgeDelegate {
         initializeFlipper(with: application)
 
         let bridge = RCTBridge(delegate: self, launchOptions: launchOptions)
+
+        #if DEBUG
+        bridge?.module(for: RCTDevLoadingView.self)
+        #endif
+
         let rootView = RCTRootView(bridge: bridge!, moduleName: "example", initialProperties: nil)
 
         if #available(iOS 13.0, *) {
