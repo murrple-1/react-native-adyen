@@ -2,3 +2,7 @@ included:
   - ios
 excluded:
   - ios/Pods
+
+disabled_rules:
+  - function_body_length
+  - cyclomatic_complexity

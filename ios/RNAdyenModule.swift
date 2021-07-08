@@ -1,12 +1,4 @@
-//
-//  RNAdyenModule.swift
-//  RNAdyenModule
-//
-//  Copyright © 2021 Murray Christopherson. All rights reserved.
-//
-
 import Foundation
-import UIKit
 
 import Adyen
 
@@ -17,52 +9,116 @@ class RNAdyenModule: NSObject, DropInComponentDelegate {
         return true
     }
 
-    @objc
-    func startPayment(
-        _ options: NSDictionary,
-        resolver resolve: RCTPromiseResolveBlock,
-        rejecter reject: RCTPromiseRejectBlock
-    ) throws {
+    static var resolve: RCTPromiseResolveBlock?
+    static var reject: RCTPromiseRejectBlock?
+
+    @objc(startPayment:resolve:reject:) func startPayment(_ options: NSDictionary, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         do {
-            let paymentMethodsJsonStr = options["paymentMethodsJsonStr"] as! String
-            let clientKey = options["clientKey"] as! String
-            let environment = options["environment"] as! String
-            let amount = options["amount"] as! [String: AnyObject]
+            if let presentedViewController = RCTPresentedViewController() {
+                guard let paymentMethodsJsonStr = options["paymentMethodsJsonStr"] as? String else {
+                    reject("Options Error", "'paymentMethodsJsonStr' missing", nil)
+                    return
+                }
+                guard let clientKey = options["clientKey"] as? String else {
+                    reject("Options Error", "'clientKey' missing", nil)
+                    return
+                }
+                guard let environment = options["environment"] as? String else {
+                    reject("Options Error", "'environment' missing", nil)
+                    return
+                }
+                guard let amount = options["amount"] as? [String: AnyObject] else {
+                    reject("Options Error", "'amount' missing", nil)
+                    return
+                }
 
-            let paymentMethods = try JSONDecoder().decode(PaymentMethods.self, from: paymentMethodsJsonStr.data(using: String.Encoding.utf8)!)
-            let apiContext = APIContext(environment: Environment.test, clientKey: clientKey as String)
-            let configuration = DropInComponent.Configuration(apiContext: apiContext)
+                guard let paymentMethodsJson = paymentMethodsJsonStr.data(using: String.Encoding.utf8) else {
+                    reject("Options Error", "'paymentMethodsJsonStr' malformed", nil)
+                    return
+                }
 
-            let dropInComponent = DropInComponent(paymentMethods: paymentMethods, configuration: configuration)
-            dropInComponent.delegate = self
+                let paymentMethods = try JSONDecoder().decode(PaymentMethods.self, from: paymentMethodsJson)
 
-            RCTPresentedViewController()?.present(dropInComponent.viewController, animated: true, completion: nil)
+                var configEnvironment: Environment
+                switch environment {
+                case "test":
+                    configEnvironment = Environment.test
+                case "europe":
+                    configEnvironment = Environment.liveEurope
+                case "united_states":
+                    configEnvironment = Environment.liveUnitedStates
+                case "australia":
+                    configEnvironment = Environment.liveAustralia
+                default:
+                    reject("Options Error", "'environment' malformed", nil)
+                    return
+                }
+
+                var configLocale: String?
+                if let locale = options["locale"] as? String {
+                    configLocale = locale
+                }
+
+                let apiContext = APIContext(environment: configEnvironment, clientKey: clientKey)
+
+                let dropInConfiguration = DropInComponent.Configuration(apiContext: apiContext)
+
+                guard let amountValue = amount["value"] as? Int else {
+                    reject("Options Error", "'value' missing", nil)
+                    return
+                }
+                guard let amountCurrency = amount["currency"] as? String else {
+                    reject("Options Error", "'currency' missing", nil)
+                    return
+                }
+                dropInConfiguration.payment = Payment(amount: Amount(value: amountValue, currencyCode: amountCurrency), countryCode: "US")
+                dropInConfiguration.localizationParameters = LocalizationParameters(bundle: nil, tableName: nil, keySeparator: nil, locale: configLocale)
+
+                let dropInComponent = DropInComponent(paymentMethods: paymentMethods, configuration: dropInConfiguration)
+                dropInComponent.delegate = self
+
+                RNAdyenModule.resolve = resolve
+                RNAdyenModule.reject = reject
+
+                DispatchQueue.main.async {
+                    presentedViewController.present(dropInComponent.viewController, animated: true, completion: nil)
+                }
+            } else {
+                reject("View Controller Error", "View Controller is nil", nil)
+            }
         } catch let error {
-            throw error
+            reject("Unknown Error", error.localizedDescription, error)
         }
     }
 
     func didSubmit(_ data: PaymentComponentData, for paymentMethod: PaymentMethod, from component: DropInComponent) {
         // TODO implement
+        print("didSubmit")
     }
 
     func didProvide(_ data: ActionComponentData, from component: DropInComponent) {
         // TODO implement
+        print("didProvide")
     }
 
     func didComplete(from component: DropInComponent) {
-        // TODO implement
+        component.viewController.dismiss(animated: true, completion: nil)
     }
 
     func didFail(with error: Error, from component: DropInComponent) {
-        // TODO implement
+        component.viewController.dismiss(animated: true, completion: nil)
+        if let reject = RNAdyenModule.reject {
+            reject("Unknown Error", error.localizedDescription, error)
+        }
     }
 
     func didCancel(component: PaymentComponent, from dropInComponent: DropInComponent) {
-        // TODO implement
+        // do nothing
+        print("didCancel")
     }
 
     func didOpenExternalApplication(_ component: DropInComponent) {
-        // TODO implement
+        // do nothing
+        print("didOpenExternalApplication")
     }
 }
