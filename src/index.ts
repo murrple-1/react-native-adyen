@@ -78,7 +78,10 @@ export interface StartPaymentOptions {
   environment: Environment;
   amount: Amount;
   locale?: string;
-  cardOptions?: {};
+  cardOptions?: {
+    shopperReference?: string;
+  };
+  googlePayOptions?: {};
 }
 
 export async function startPayment(options: StartPaymentOptions) {

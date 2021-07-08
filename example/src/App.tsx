@@ -21,14 +21,23 @@ const App = () => {
       shopperReference: environment.shopperReference,
     })
       .then(async paymentMethodsJsonStr => {
-        const checkoutResponse = await startPayment({
-          paymentMethodsJsonStr,
-          clientKey: environment.clientKey,
-          environment: 'test',
-          amount: environment.amount,
-          cardOptions: {},
-        });
-        Alert.alert('Response', JSON.stringify(checkoutResponse));
+        console.log(paymentMethodsJsonStr);
+
+        try {
+          const checkoutResponse = await startPayment({
+            paymentMethodsJsonStr,
+            clientKey: environment.clientKey,
+            environment: 'test',
+            amount: environment.amount,
+            cardOptions: {
+              shopperReference: environment.shopperReference,
+            },
+            googlePayOptions: {},
+          });
+          Alert.alert('Response', JSON.stringify(checkoutResponse));
+        } catch (reason: unknown) {
+          console.error(reason);
+        }
       })
       .finally(() => {
         setIsLoading(false);
