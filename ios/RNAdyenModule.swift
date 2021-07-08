@@ -6,7 +6,6 @@
 //
 
 import Foundation
-
 import UIKit
 
 import Adyen
@@ -25,8 +24,12 @@ class RNAdyenModule: NSObject, DropInComponentDelegate {
         rejecter reject: RCTPromiseRejectBlock
     ) throws {
         do {
-            let jsonData = try JSONSerialization.data(withJSONObject: paymentMethodsJson)
-            let paymentMethods = try JSONDecoder().decode(PaymentMethods.self, from: jsonData)
+            let paymentMethodsJsonStr = options["paymentMethodsJsonStr"] as! String
+            let clientKey = options["clientKey"] as! String
+            let environment = options["environment"] as! String
+            let amount = options["amount"] as! [String: AnyObject]
+
+            let paymentMethods = try JSONDecoder().decode(PaymentMethods.self, from: paymentMethodsJsonStr.data(using: String.Encoding.utf8)!)
             let apiContext = APIContext(environment: Environment.test, clientKey: clientKey as String)
             let configuration = DropInComponent.Configuration(apiContext: apiContext)
 
