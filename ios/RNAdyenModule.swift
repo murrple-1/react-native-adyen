@@ -9,10 +9,16 @@ class RNAdyenModule: NSObject, DropInComponentDelegate {
         return true
     }
 
+    static var dropInComponent: DropInComponent?
     static var resolve: RCTPromiseResolveBlock?
     static var reject: RCTPromiseRejectBlock?
 
     @objc(startPayment:resolve:reject:) func startPayment(_ options: NSDictionary, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        if RNAdyenModule.dropInComponent != nil {
+            reject("Already Running Error", "DropInComponent already visible", nil)
+            return
+        }
+
         do {
             if let presentedViewController = RCTPresentedViewController() {
                 guard let paymentMethodsJsonStr = options["paymentMethodsJsonStr"] as? String else {
@@ -77,11 +83,12 @@ class RNAdyenModule: NSObject, DropInComponentDelegate {
                 let dropInComponent = DropInComponent(paymentMethods: paymentMethods, configuration: dropInConfiguration)
                 dropInComponent.delegate = self
 
+                RNAdyenModule.dropInComponent = dropInComponent
                 RNAdyenModule.resolve = resolve
                 RNAdyenModule.reject = reject
 
                 DispatchQueue.main.async {
-                    presentedViewController.present(dropInComponent.viewController, animated: true, completion: nil)
+                    presentedViewController.present(dropInComponent.viewController, animated: true)
                 }
             } else {
                 reject("View Controller Error", "View Controller is nil", nil)
@@ -102,13 +109,21 @@ class RNAdyenModule: NSObject, DropInComponentDelegate {
     }
 
     func didComplete(from component: DropInComponent) {
-        component.viewController.dismiss(animated: true, completion: nil)
+        component.viewController.dismiss(animated: true) {
+            RNAdyenModule.dropInComponent = nil
+            RNAdyenModule.resolve = nil
+            RNAdyenModule.reject = nil
+        }
     }
 
     func didFail(with error: Error, from component: DropInComponent) {
-        component.viewController.dismiss(animated: true, completion: nil)
         if let reject = RNAdyenModule.reject {
             reject("Unknown Error", error.localizedDescription, error)
+        }
+        component.viewController.dismiss(animated: true) {
+            RNAdyenModule.dropInComponent = nil
+            RNAdyenModule.resolve = nil
+            RNAdyenModule.reject = nil
         }
     }
 
