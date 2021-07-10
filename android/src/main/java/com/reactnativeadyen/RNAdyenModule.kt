@@ -27,7 +27,7 @@ class RNAdyenModule(private var reactContext: ReactApplicationContext) : ReactCo
 
     @ReactMethod
     fun startPayment(options: ReadableMap, promise: Promise) {
-        val activity = getCurrentActivity()
+        val activity = currentActivity
         if (activity != null) {
             val paymentMethodsJsonStr = options.getString("paymentMethodsJsonStr") as String
             val clientKey = options.getString("clientKey") as String
