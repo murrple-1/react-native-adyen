@@ -21,8 +21,9 @@ class RNAdyenModule(private var reactContext: ReactApplicationContext) : ReactCo
 
     override fun getName() = "RNAdyenModule"
 
-    object PromiseWrapper {
+    object Context {
         var promise: Promise? = null
+        var adyenHost: String? = null
     }
 
     @ReactMethod
@@ -107,7 +108,7 @@ class RNAdyenModule(private var reactContext: ReactApplicationContext) : ReactCo
                 dropInConfigurationBuilder.addGooglePayConfiguration(googlePayConfigurationBuilder.build())
             }
 
-            PromiseWrapper.promise = promise
+            Context.promise = promise
 
             DropIn.startPayment(activity, paymentMethodsApiResponse, dropInConfigurationBuilder.build())
         }
@@ -122,17 +123,17 @@ class RNAdyenModule(private var reactContext: ReactApplicationContext) : ReactCo
         val dropInResult = DropIn.handleActivityResult(requestCode, resultCode, data) ?: return
         when (dropInResult) {
             is DropInResult.Finished -> {
-                PromiseWrapper.promise?.resolve(dropInResult.result)
+                Context.promise?.resolve(dropInResult.result)
             }
             is DropInResult.Error -> {
-                PromiseWrapper.promise?.reject("DropInResultError", dropInResult.reason)
+                Context.promise?.reject("DropInResultError", dropInResult.reason)
             }
             is DropInResult.CancelledByUser -> {
-                PromiseWrapper.promise?.reject("DropInResultCancelledByUser", "Cancelled by User")
+                Context.promise?.reject("DropInResultCancelledByUser", "Cancelled by User")
             }
         }
 
-        PromiseWrapper.promise = null
+        Context.promise = null
     }
 
     override fun onNewIntent(intent: Intent?) {

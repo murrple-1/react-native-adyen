@@ -21,13 +21,12 @@ const App = () => {
       shopperReference: environment.shopperReference,
     })
       .then(async paymentMethodsJsonStr => {
-        console.log(paymentMethodsJsonStr);
-
         try {
           const checkoutResponse = await startPayment({
             paymentMethodsJsonStr,
             clientKey: environment.clientKey,
             environment: 'test',
+            countryCode: environment.countryCode,
             amount: environment.amount,
             cardOptions: {
               shopperReference: environment.shopperReference,

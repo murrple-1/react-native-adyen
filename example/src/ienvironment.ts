@@ -1,10 +1,10 @@
-import { Amount } from 'react-native-adyen';
+import { Amount, CountryCode } from 'react-native-adyen';
 
 export interface IEnvironment {
   adyenHost: string;
   clientKey: string;
   merchantAccount: string;
-  countryCode: string | undefined;
+  countryCode: CountryCode;
   amount: Amount;
   shopperReference: string | undefined;
 

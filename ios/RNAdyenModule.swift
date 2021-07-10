@@ -1,5 +1,7 @@
 import Foundation
 
+import PassKit
+
 import Adyen
 
 @objc(RNAdyenModule)
@@ -35,6 +37,10 @@ class RNAdyenModule: NSObject, DropInComponentDelegate {
                 }
                 guard let amount = options["amount"] as? [String: AnyObject] else {
                     reject("Options Error", "'amount' missing", nil)
+                    return
+                }
+                guard let countryCode = options["countryCode"] as? String else {
+                    reject("Options Error", "'countryCode' missing", nil)
                     return
                 }
 
@@ -77,8 +83,22 @@ class RNAdyenModule: NSObject, DropInComponentDelegate {
                     reject("Options Error", "'currency' missing", nil)
                     return
                 }
-                dropInConfiguration.payment = Payment(amount: Amount(value: amountValue, currencyCode: amountCurrency), countryCode: "US")
+                dropInConfiguration.payment = Payment(amount: Amount(value: amountValue, currencyCode: amountCurrency), countryCode: countryCode)
                 dropInConfiguration.localizationParameters = LocalizationParameters(bundle: nil, tableName: nil, keySeparator: nil, locale: configLocale)
+
+                if let applePayOptions = options["applePayOptions"] as? [String: AnyObject] {
+                    guard let summaryItems = applePayOptions["summaryItems"] as? [AnyObject] else {
+                        reject("Options Error", "'summaryItems' missing", nil)
+                        return
+                    }
+
+                    var configSummaryItems: [PKPaymentSummaryItem] = []
+                    for summaryItem in summaryItems {
+                        configSummaryItems.append(PKPaymentSummaryItem(label: <#T##String#>, amount: <#T##NSDecimalNumber#>, type: <#T##PKPaymentSummaryItemType#>))
+                    }
+
+                    let applePayConfiguration = ApplePayComponent.Configuration(summaryItems: <#T##[PKPaymentSummaryItem]#>, merchantIdentifier: <#T##String#>)
+                }
 
                 let dropInComponent = DropInComponent(paymentMethods: paymentMethods, configuration: dropInConfiguration)
                 dropInComponent.delegate = self

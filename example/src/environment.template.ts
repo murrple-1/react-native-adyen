@@ -4,7 +4,7 @@ export const environment: IEnvironment = {
   adyenHost: '<ADYEN_HOST>',
   clientKey: '<CLIENT_KEY>',
   merchantAccount: '<MERCHANT_ACCOUNT>',
-  countryCode: undefined,
+  countryCode: 'US',
   amount: {
     currency: 'USD',
     value: 100,
