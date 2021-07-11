@@ -9,6 +9,11 @@
   "author": "Murray Christopherson <murraychristopherson@gmail.com>",
   "license": "MIT",
   "private": false,
+  "keywords": [
+    "react-native",
+    "adyen",
+    "drop-in"
+  ],
   "files": [
     "README.md",
     "android",
