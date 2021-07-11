@@ -13,7 +13,7 @@ const App = () => {
     setIsLoading(true);
 
     _getPaymentMethodsJsonStr({
-      adyenCheckoutHost: environment.adyenHost,
+      adyenCheckoutHost: environment.adyenCheckoutHost,
       apiKey: environment.apiKey,
       merchantAccount: environment.merchantAccount,
       countryCode: environment.countryCode,
@@ -23,6 +23,7 @@ const App = () => {
       .then(async paymentMethodsJsonStr => {
         try {
           const checkoutResponse = await startPayment({
+            adyenCheckoutHost: environment.adyenCheckoutHost,
             paymentMethodsJsonStr,
             clientKey: environment.clientKey,
             environment: 'test',

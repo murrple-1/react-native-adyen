@@ -1,7 +1,7 @@
 import { Amount, CountryCode } from 'react-native-adyen';
 
 export interface IEnvironment {
-  adyenHost: string;
+  adyenCheckoutHost: string;
   clientKey: string;
   merchantAccount: string;
   countryCode: CountryCode;

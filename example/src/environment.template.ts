@@ -1,7 +1,7 @@
 import { IEnvironment } from './ienvironment';
 
 export const environment: IEnvironment = {
-  adyenHost: '<ADYEN_HOST>',
+  adyenCheckoutHost: '<ADYEN_CHECKOUT_HOST>', // like 'https://checkout-test.adyen.com'
   clientKey: '<CLIENT_KEY>',
   merchantAccount: '<MERCHANT_ACCOUNT>',
   countryCode: 'US',

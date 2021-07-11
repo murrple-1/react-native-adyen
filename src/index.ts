@@ -325,6 +325,7 @@ export async function _getPaymentMethodsJsonStr({
 }
 
 export interface StartPaymentOptions {
+  adyenCheckoutHost: string;
   paymentMethodsJsonStr: string;
   clientKey: string;
   environment: Environment;
