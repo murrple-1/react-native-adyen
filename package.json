@@ -8,6 +8,7 @@
   "types": "lib/index.d.ts",
   "author": "Murray Christopherson <murraychristopherson@gmail.com>",
   "license": "MIT",
+  "private": false,
   "files": [
     "android",
     "ios",
