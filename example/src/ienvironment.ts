@@ -1,4 +1,4 @@
-import { Amount, CountryCode } from 'react-native-adyen';
+import { Amount, CountryCode } from '@murrple_1/react-native-adyen';
 
 export interface IEnvironment {
   adyenCheckoutHost: string;

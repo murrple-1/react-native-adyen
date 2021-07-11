@@ -7,7 +7,7 @@
     "module": "CommonJS",
     "noEmit": true,
     "paths": {
-      "react-native-adyen": ["../src"]
+      "@murrple_1/react-native-adyen": ["../src"]
     },
     "skipLibCheck": true,
     "strict": true,

@@ -14,7 +14,7 @@
   "dependencies": {
     "react": "^17.0.2",
     "react-native": "^0.64.2",
-    "react-native-adyen": "link:.."
+    "react-native-adyen": "link:../"
   },
   "devDependencies": {
     "@babel/core": "^7.14.6",

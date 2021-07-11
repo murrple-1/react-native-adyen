@@ -2,7 +2,10 @@ import React, { useCallback, useState } from 'react';
 
 import { Button, Alert, SafeAreaView } from 'react-native';
 
-import { _getPaymentMethodsJsonStr, startPayment } from 'react-native-adyen';
+import {
+  _getPaymentMethodsJsonStr,
+  startPayment,
+} from '@murrple_1/react-native-adyen';
 
 import { environment } from './environment';
 
