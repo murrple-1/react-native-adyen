@@ -36,15 +36,23 @@ class RNAdyenModule(private var reactContext: ReactApplicationContext) : ReactCo
             var configSendPaymentsRequestDescriptor: RequestDescriptor
             (options.getMap("sendPaymentsRequestDescriptor") as ReadableMap).run {
                 val url = this.getString("url") as String
-                val headers = this.getMap("headers") as Map<String, String>
-                configSendPaymentsRequestDescriptor = RequestDescriptor(url, headers)
+                val headers = this.getMap("headers") as ReadableMap
+                val configHeaders = mutableMapOf<String, String>()
+                for ((headerKey, headerValue) in headers.entryIterator) {
+                    configHeaders[headerKey] = headerValue as String
+                }
+                configSendPaymentsRequestDescriptor = RequestDescriptor(url, configHeaders)
             }
 
             var configSendDetailsRequestDescriptor: RequestDescriptor
             (options.getMap("sendDetailsRequestDescriptor") as ReadableMap).run {
                 val url = this.getString("url") as String
-                val headers = this.getMap("headers") as Map<String, String>
-                configSendDetailsRequestDescriptor = RequestDescriptor(url, headers)
+                val headers = this.getMap("headers") as ReadableMap
+                val configHeaders = mutableMapOf<String, String>()
+                for ((headerKey, headerValue) in headers.entryIterator) {
+                    configHeaders[headerKey] = headerValue as String
+                }
+                configSendDetailsRequestDescriptor = RequestDescriptor(url, configHeaders)
             }
 
             val paymentMethodsJsonStr = options.getString("paymentMethodsJsonStr") as String
