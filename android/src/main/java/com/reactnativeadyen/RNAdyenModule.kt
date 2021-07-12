@@ -15,6 +15,8 @@ import java.util.Locale
 import org.json.JSONObject
 
 class RNAdyenModule(private var reactContext: ReactApplicationContext) : ReactContextBaseJavaModule(reactContext), ActivityEventListener {
+    data class RequestDescriptor(val url: String, val headers: Map<String, String>)
+
     init {
         reactContext.addActivityEventListener(this)
     }
@@ -23,13 +25,28 @@ class RNAdyenModule(private var reactContext: ReactApplicationContext) : ReactCo
 
     object Context {
         var promise: Promise? = null
-        var adyenHost: String? = null
+        var sendPaymentsRequestDescriptor: RequestDescriptor? = null
+        var sendDetailsRequestDescriptor: RequestDescriptor? = null
     }
 
     @ReactMethod
     fun startPayment(options: ReadableMap, promise: Promise) {
         val activity = currentActivity
         if (activity != null) {
+            var configSendPaymentsRequestDescriptor: RequestDescriptor
+            (options.getMap("sendPaymentsRequestDescriptor") as ReadableMap).run {
+                val url = this.getString("url") as String
+                val headers = this.getMap("headers") as Map<String, String>
+                configSendPaymentsRequestDescriptor = RequestDescriptor(url, headers)
+            }
+
+            var configSendDetailsRequestDescriptor: RequestDescriptor
+            (options.getMap("sendDetailsRequestDescriptor") as ReadableMap).run {
+                val url = this.getString("url") as String
+                val headers = this.getMap("headers") as Map<String, String>
+                configSendDetailsRequestDescriptor = RequestDescriptor(url, headers)
+            }
+
             val paymentMethodsJsonStr = options.getString("paymentMethodsJsonStr") as String
             val clientKey = options.getString("clientKey") as String
             val environment = options.getString("environment") as String
@@ -109,6 +126,8 @@ class RNAdyenModule(private var reactContext: ReactApplicationContext) : ReactCo
             }
 
             Context.promise = promise
+            Context.sendPaymentsRequestDescriptor = configSendPaymentsRequestDescriptor
+            Context.sendDetailsRequestDescriptor = configSendDetailsRequestDescriptor
 
             DropIn.startPayment(activity, paymentMethodsApiResponse, dropInConfigurationBuilder.build())
         }
@@ -120,20 +139,24 @@ class RNAdyenModule(private var reactContext: ReactApplicationContext) : ReactCo
         resultCode: Int,
         data: Intent?
     ) {
-        val dropInResult = DropIn.handleActivityResult(requestCode, resultCode, data) ?: return
-        when (dropInResult) {
-            is DropInResult.Finished -> {
-                Context.promise?.resolve(dropInResult.result)
+        try {
+            val dropInResult = DropIn.handleActivityResult(requestCode, resultCode, data) ?: return
+            when (dropInResult) {
+                is DropInResult.Finished -> {
+                    Context.promise?.resolve(dropInResult.result)
+                }
+                is DropInResult.Error -> {
+                    Context.promise?.reject("DropInResultError", dropInResult.reason)
+                }
+                is DropInResult.CancelledByUser -> {
+                    Context.promise?.reject("DropInResultCancelledByUser", "Cancelled by User")
+                }
             }
-            is DropInResult.Error -> {
-                Context.promise?.reject("DropInResultError", dropInResult.reason)
-            }
-            is DropInResult.CancelledByUser -> {
-                Context.promise?.reject("DropInResultCancelledByUser", "Cancelled by User")
-            }
+        } finally {
+            Context.promise = null
+            Context.sendPaymentsRequestDescriptor = null
+            Context.sendDetailsRequestDescriptor = null
         }
-
-        Context.promise = null
     }
 
     override fun onNewIntent(intent: Intent?) {

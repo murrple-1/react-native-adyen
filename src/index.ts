@@ -300,7 +300,7 @@ export interface _GetPaymentMethodsJsonStrOptions {
   shopperReference?: string;
 }
 
-export async function _getPaymentMethodsJsonStr({
+export async function _getPaymentMethods({
   adyenCheckoutHost,
   apiKey,
   merchantAccount,
@@ -324,9 +324,15 @@ export async function _getPaymentMethodsJsonStr({
   return await response.text();
 }
 
+export interface RequestDescriptor {
+  url: string;
+  headers: Record<string, string>;
+}
+
 export interface StartPaymentOptions {
-  adyenCheckoutHost: string;
   paymentMethodsJsonStr: string;
+  sendPaymentsRequestDescriptor: RequestDescriptor;
+  sendDetailsRequestDescriptor: RequestDescriptor;
   clientKey: string;
   environment: Environment;
   amount: Amount;
@@ -340,8 +346,9 @@ export interface StartPaymentOptions {
     summaryItems: {
       label: string;
       amount: number;
-      type: unknown;
+      type: 'final' | 'pending';
     }[];
+    merchantIdentifier: string;
   };
 }
 

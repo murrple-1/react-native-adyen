@@ -43,14 +43,9 @@ async function startPayment(options: StartPaymentOptions): Promise<string>;
 and
 
 ```typescript
-async function _getPaymentMethodsJsonStr({
-  adyenCheckoutHost,
-  apiKey,
-  merchantAccount,
-  countryCode,
-  amount,
-  shopperReference,
-}: _GetPaymentMethodsJsonStrOptions): Promise<string>;
+async function _getPaymentMethodsJsonStr(
+  options: _GetPaymentMethodsJsonStrOptions,
+): Promise<string>;
 ```
 
 ## Help

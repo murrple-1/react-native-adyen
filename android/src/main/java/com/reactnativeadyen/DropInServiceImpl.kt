@@ -16,10 +16,12 @@ class DropInServiceImpl : DropInService() {
     }
 
     override fun makePaymentsCall(paymentComponentJson: JSONObject): DropInServiceResult {
-        val adyenHost = RNAdyenModule.Context.adyenHost as String
+        val sendPaymentsRequestDescriptor = RNAdyenModule.Context.sendPaymentsRequestDescriptor as RNAdyenModule.RequestDescriptor
 
         val future: RequestFuture<JSONObject> = RequestFuture.newFuture()
-        val request = JsonObjectRequest(Method.POST, "$adyenHost/payments", paymentComponentJson, future, future)
+        val request = JsonObjectRequest(Method.POST, sendPaymentsRequestDescriptor.url, paymentComponentJson, future, future)
+        request.headers.putAll(sendPaymentsRequestDescriptor.headers)
+        request.headers["Content-Type"] = "application/json"
         requestQueue.add(request)
 
         return try {
@@ -33,10 +35,12 @@ class DropInServiceImpl : DropInService() {
     }
 
     override fun makeDetailsCall(actionComponentJson: JSONObject): DropInServiceResult {
-        val adyenHost = RNAdyenModule.Context.adyenHost as String
+        val sendDetailsRequestDescriptor = RNAdyenModule.Context.sendDetailsRequestDescriptor as RNAdyenModule.RequestDescriptor
 
         val future: RequestFuture<JSONObject> = RequestFuture.newFuture()
-        val request = JsonObjectRequest(Method.POST, "$adyenHost/payments/details", actionComponentJson, future, future)
+        val request = JsonObjectRequest(Method.POST, sendDetailsRequestDescriptor.url, actionComponentJson, future, future)
+        request.headers.putAll(sendDetailsRequestDescriptor.headers)
+        request.headers["Content-Type"] = "application/json"
         requestQueue.add(request)
 
         return try {
