@@ -63,3 +63,6 @@ buck-out/
 
 # Library
 lib/
+
+# Custom
+.watchman-cookie*
