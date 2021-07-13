@@ -15,18 +15,41 @@ import java.util.Locale
 import org.json.JSONObject
 
 class RNAdyenModule(private var reactContext: ReactApplicationContext) : ReactContextBaseJavaModule(reactContext), ActivityEventListener {
-    data class RequestDescriptor(val url: String, val headers: Map<String, String>)
-
     init {
         reactContext.addActivityEventListener(this)
     }
 
     override fun getName() = "RNAdyenModule"
 
+    data class RequestDescriptor(val url: String, val headers: Map<String, String>)
+
+    data class Amount(val currency: String, val value: Int)
+
     object Context {
         var promise: Promise? = null
         var sendPaymentsRequestDescriptor: RequestDescriptor? = null
         var sendDetailsRequestDescriptor: RequestDescriptor? = null
+        var merchantAccount: String? = null
+        var amount: Amount? = null
+        var reference: String? = null
+
+        fun setup(promise: Promise, sendPaymentsRequestDescriptor: RequestDescriptor, sendDetailsRequestDescriptor: RequestDescriptor, merchantAccount: String, amount: Amount, reference: String) {
+            this.promise = promise
+            this.sendPaymentsRequestDescriptor = sendPaymentsRequestDescriptor
+            this.sendDetailsRequestDescriptor = sendDetailsRequestDescriptor
+            this.merchantAccount = merchantAccount
+            this.amount = amount
+            this.reference = reference
+        }
+
+        fun reset() {
+            promise = null
+            sendPaymentsRequestDescriptor = null
+            sendDetailsRequestDescriptor = null
+            merchantAccount = null
+            amount = null
+            reference = null
+        }
     }
 
     @ReactMethod
@@ -57,6 +80,8 @@ class RNAdyenModule(private var reactContext: ReactApplicationContext) : ReactCo
 
             val paymentMethodsJsonStr = options.getString("paymentMethodsJsonStr") as String
             val clientKey = options.getString("clientKey") as String
+            val merchantAccount = options.getString("merchantAccount") as String
+            val reference = options.getString("reference") as String
             val environment = options.getString("environment") as String
             val amount = options.getMap("amount") as ReadableMap
 
@@ -71,9 +96,11 @@ class RNAdyenModule(private var reactContext: ReactApplicationContext) : ReactCo
 
             val dropInConfigurationBuilder = DropInConfiguration.Builder(reactContext, DropInServiceImpl::class.java, clientKey)
 
+            val amountCurrency = amount.getString("currency") as String
+            val amountValue = amount.getInt("value")
             val configAmount = Amount().apply {
-                this.currency = amount.getString("currency") as String
-                this.value = amount.getInt("value")
+                this.currency = amountCurrency
+                this.value = amountValue
             }
             dropInConfigurationBuilder.setAmount(configAmount)
 
@@ -133,9 +160,7 @@ class RNAdyenModule(private var reactContext: ReactApplicationContext) : ReactCo
                 dropInConfigurationBuilder.addGooglePayConfiguration(googlePayConfigurationBuilder.build())
             }
 
-            Context.promise = promise
-            Context.sendPaymentsRequestDescriptor = configSendPaymentsRequestDescriptor
-            Context.sendDetailsRequestDescriptor = configSendDetailsRequestDescriptor
+            Context.setup(promise, configSendPaymentsRequestDescriptor, configSendDetailsRequestDescriptor, merchantAccount, Amount(amountCurrency, amountValue), reference)
 
             DropIn.startPayment(activity, paymentMethodsApiResponse, dropInConfigurationBuilder.build())
         }
@@ -161,9 +186,7 @@ class RNAdyenModule(private var reactContext: ReactApplicationContext) : ReactCo
                 }
             }
         } finally {
-            Context.promise = null
-            Context.sendPaymentsRequestDescriptor = null
-            Context.sendDetailsRequestDescriptor = null
+            Context.reset()
         }
     }
 

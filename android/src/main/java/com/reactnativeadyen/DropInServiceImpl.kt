@@ -7,6 +7,7 @@ import com.android.volley.RequestQueue
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.RequestFuture
 import com.android.volley.toolbox.Volley
+import com.reactnativeadyen.RNAdyenModule.Amount
 import java.util.concurrent.ExecutionException
 import org.json.JSONObject
 
@@ -18,20 +19,27 @@ class DropInServiceImpl : DropInService() {
     override fun makePaymentsCall(paymentComponentJson: JSONObject): DropInServiceResult {
         val sendPaymentsRequestDescriptor = RNAdyenModule.Context.sendPaymentsRequestDescriptor as RNAdyenModule.RequestDescriptor
 
+        val jsonObject = JSONObject().apply {
+            put("merchantAccount", RNAdyenModule.Context.merchantAccount as String)
+            put(
+                "amount",
+                JSONObject().apply {
+                    val amount = RNAdyenModule.Context.amount as Amount
+                    put("currency", amount.currency)
+                    put("value", amount.value)
+                }
+            )
+            put("reference", RNAdyenModule.Context.reference as String)
+            put("paymentMethod", paymentComponentJson)
+        }
+
         val future: RequestFuture<JSONObject> = RequestFuture.newFuture()
-        val request = JsonObjectRequest(Method.POST, sendPaymentsRequestDescriptor.url, paymentComponentJson, future, future)
+        val request = JsonObjectRequest(Method.POST, sendPaymentsRequestDescriptor.url, jsonObject, future, future)
         request.headers.putAll(sendPaymentsRequestDescriptor.headers)
         request.headers["Content-Type"] = "application/json"
         requestQueue.add(request)
 
-        return try {
-            val response: JSONObject = future.get()
-            DropInServiceResult.Action(response.toString())
-        } catch (e: InterruptedException) {
-            DropInServiceResult.Error(e.message, "InterruptedException")
-        } catch (e: ExecutionException) {
-            DropInServiceResult.Error(e.message, "ExecutionException")
-        }
+        return this.handlePaymentsDetailsResponse(future)
     }
 
     override fun makeDetailsCall(actionComponentJson: JSONObject): DropInServiceResult {
@@ -43,13 +51,29 @@ class DropInServiceImpl : DropInService() {
         request.headers["Content-Type"] = "application/json"
         requestQueue.add(request)
 
-        return try {
-            future.get()
-            DropInServiceResult.Finished("Success")
+        return this.handlePaymentsDetailsResponse(future)
+    }
+
+    private fun handlePaymentsDetailsResponse(future: RequestFuture<JSONObject>): DropInServiceResult {
+        try {
+            val response = future.get()
+
+            return if (response.has("action")) {
+                val action = response.getJSONObject("action")
+                DropInServiceResult.Action(action.toString())
+            } else {
+                if (response.has("refusalReason")) {
+                    val refusalReason = response.getString("refusalReason")
+                    DropInServiceResult.Error(refusalReason, "Refusal")
+                } else {
+                    val resultCode = response.getString("resultCode")
+                    DropInServiceResult.Finished(resultCode)
+                }
+            }
         } catch (e: InterruptedException) {
-            DropInServiceResult.Error(e.message, "InterruptedException")
+            return DropInServiceResult.Error(e.message, "InterruptedException")
         } catch (e: ExecutionException) {
-            DropInServiceResult.Error(e.message, "ExecutionException")
+            return DropInServiceResult.Error(e.message, "ExecutionException")
         }
     }
 }
