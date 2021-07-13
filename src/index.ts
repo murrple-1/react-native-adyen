@@ -284,6 +284,11 @@ export type CountryCode =
   | 'ZM'
   | 'ZW';
 
+export interface RequestDescriptor {
+  url: string;
+  headers: Record<string, string>;
+}
+
 export interface Amount {
   currency: CurrencyType;
   value: number;
@@ -292,8 +297,7 @@ export interface Amount {
 export type Environment = 'test' | 'europe' | 'united_states' | 'australia';
 
 export interface _GetPaymentMethodsJsonStrOptions {
-  adyenCheckoutHost: string;
-  apiKey: string;
+  requestDescriptor: RequestDescriptor;
   merchantAccount: string;
   countryCode?: CountryCode;
   amount?: Amount;
@@ -301,17 +305,16 @@ export interface _GetPaymentMethodsJsonStrOptions {
 }
 
 export async function _getPaymentMethods({
-  adyenCheckoutHost,
-  apiKey,
+  requestDescriptor,
   merchantAccount,
   countryCode,
   amount,
   shopperReference,
 }: _GetPaymentMethodsJsonStrOptions) {
-  const response = await fetch(`${adyenCheckoutHost}/v67/paymentMethods`, {
+  const response = await fetch(requestDescriptor.url, {
     headers: {
+      ...requestDescriptor.headers,
       'Content-Type': 'application/json',
-      'X-API-Key': apiKey,
     },
     body: JSON.stringify({
       merchantAccount,
@@ -324,16 +327,13 @@ export async function _getPaymentMethods({
   return await response.text();
 }
 
-export interface RequestDescriptor {
-  url: string;
-  headers: Record<string, string>;
-}
-
 export interface StartPaymentOptions {
   paymentMethodsJsonStr: string;
   sendPaymentsRequestDescriptor: RequestDescriptor;
   sendDetailsRequestDescriptor: RequestDescriptor;
   clientKey: string;
+  merchantAccount: string;
+  reference: string;
   environment: Environment;
   amount: Amount;
   countryCode: CountryCode;

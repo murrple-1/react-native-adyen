@@ -32,6 +32,21 @@ With NPM
 npm install --save-dev @murrple_1/react-native-adyen
 ```
 
+#### iOS
+
+Add to your `UIApplicationDelegate`:
+
+```swift
+import Adyen
+
+// ...snip...
+
+func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool {
+  RedirectComponent.applicationDidOpen(from: url)
+  return true
+}
+```
+
 ### Executing program
 
 The library exports only 2 functions:

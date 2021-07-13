@@ -39,8 +39,12 @@ const App = () => {
     setIsLoading(true);
 
     _getPaymentMethods({
-      adyenCheckoutHost: environment.adyenCheckoutHost,
-      apiKey: environment.apiKey,
+      requestDescriptor: {
+        url: `${environment.adyenCheckoutHost}/v67/paymentMethods`,
+        headers: {
+          'X-API-Key': environment.apiKey,
+        },
+      },
       merchantAccount: environment.merchantAccount,
       countryCode: 'US',
       amount: {
@@ -66,6 +70,8 @@ const App = () => {
               },
             },
             clientKey: environment.clientKey,
+            merchantAccount: environment.merchantAccount,
+            reference: '12345',
             environment: 'test',
             countryCode: 'US',
             amount: {

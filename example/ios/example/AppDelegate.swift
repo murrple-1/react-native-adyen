@@ -1,5 +1,7 @@
 import UIKit
 
+import Adyen
+
 #if DEBUG
 #if FB_SONARKIT_ENABLED
 import FlipperKit
@@ -59,5 +61,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate, RCTBridgeDelegate {
         client?.start()
         #endif
         #endif
+    }
+
+    func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool {
+        RedirectComponent.applicationDidOpen(from: url)
+        return true
     }
 }
