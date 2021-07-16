@@ -1,4 +1,4 @@
-import { NativeModules } from 'react-native';
+import { NativeModules, Platform } from 'react-native';
 
 const { RNAdyenModule } = NativeModules;
 
@@ -321,6 +321,10 @@ export async function _getPaymentMethods({
       countryCode,
       amount,
       shopperReference,
+      channel: Platform.select({
+        android: 'Android',
+        ios: 'iOS',
+      }),
     }),
     method: 'POST',
   });
@@ -353,8 +357,8 @@ export interface StartPaymentOptions {
 }
 
 export async function startPayment(options: StartPaymentOptions) {
-  const checkoutResponse = (await RNAdyenModule.startPayment(
-    options,
-  )) as string;
+  const [checkoutResponse] = (await RNAdyenModule.startPayment(options)) as [
+    string,
+  ];
   return checkoutResponse;
 }

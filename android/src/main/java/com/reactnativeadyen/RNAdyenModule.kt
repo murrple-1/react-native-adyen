@@ -176,7 +176,9 @@ class RNAdyenModule(private var reactContext: ReactApplicationContext) : ReactCo
             val dropInResult = DropIn.handleActivityResult(requestCode, resultCode, data) ?: return
             when (dropInResult) {
                 is DropInResult.Finished -> {
-                    Context.promise?.resolve(dropInResult.result)
+                    val resolveArray = Arguments.createArray()
+                    resolveArray.pushString(dropInResult.result)
+                    Context.promise?.resolve(resolveArray)
                 }
                 is DropInResult.Error -> {
                     Context.promise?.reject("DropInResultError", dropInResult.reason)
@@ -188,9 +190,5 @@ class RNAdyenModule(private var reactContext: ReactApplicationContext) : ReactCo
         } finally {
             Context.reset()
         }
-    }
-
-    override fun onNewIntent(intent: Intent?) {
-        TODO("Not yet implemented")
     }
 }

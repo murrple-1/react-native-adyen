@@ -32,189 +32,190 @@ class RNAdyenModule: NSObject {
     static var context: Context?
 
     @objc(startPayment:resolve:reject:) func startPayment(_ options: NSDictionary, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
-        if RNAdyenModule.context != nil {
-            reject("Already Running Error", "Context already in use", nil)
-            return
-        }
-
-        do {
-            if let presentedViewController = RCTPresentedViewController() {
-                var configSendPaymentsRequestDescriptor: RequestDescriptor
-                if let sendPaymentsRequestDescriptor = options["sendPaymentsRequestDescriptor"] as? [String: AnyObject] {
-                    guard let url = sendPaymentsRequestDescriptor["url"] as? String else {
-                        reject("Options Error", "'url' missing", nil)
-                        return
-                    }
-
-                    guard let headers = sendPaymentsRequestDescriptor["headers"] as? [String: String] else {
-                        reject("Options Error", "'headers' missing", nil)
-                        return
-                    }
-
-                    configSendPaymentsRequestDescriptor = RequestDescriptor(url: url, headers: headers)
-                } else {
-                    reject("Options Error", "'sendPaymentsRequestDescriptor' missing", nil)
-                    return
-                }
-
-                var configSendDetailsRequestDescriptor: RequestDescriptor
-                if let sendDetailsRequestDescriptor = options["sendDetailsRequestDescriptor"] as? [String: AnyObject] {
-                    guard let url = sendDetailsRequestDescriptor["url"] as? String else {
-                        reject("Options Error", "'url' missing", nil)
-                        return
-                    }
-
-                    guard let headers = sendDetailsRequestDescriptor["headers"] as? [String: String] else {
-                        reject("Options Error", "'headers' missing", nil)
-                        return
-                    }
-
-                    configSendDetailsRequestDescriptor = RequestDescriptor(url: url, headers: headers)
-                } else {
-                    reject("Options Error", "'sendPaymentsRequestDescriptor' missing", nil)
-                    return
-                }
-
-                guard let paymentMethodsJsonStr = options["paymentMethodsJsonStr"] as? String else {
-                    reject("Options Error", "'paymentMethodsJsonStr' missing", nil)
-                    return
-                }
-                guard let clientKey = options["clientKey"] as? String else {
-                    reject("Options Error", "'clientKey' missing", nil)
-                    return
-                }
-                guard let merchantAccount = options["merchantAccount"] as? String else {
-                    reject("Options Error", "'merchantAccount' missing", nil)
-                    return
-                }
-                guard let reference = options["reference"] as? String else {
-                    reject("Options Error", "'reference' missing", nil)
-                    return
-                }
-                guard let environment = options["environment"] as? String else {
-                    reject("Options Error", "'environment' missing", nil)
-                    return
-                }
-                guard let amount = options["amount"] as? [String: AnyObject] else {
-                    reject("Options Error", "'amount' missing", nil)
-                    return
-                }
-                guard let countryCode = options["countryCode"] as? String else {
-                    reject("Options Error", "'countryCode' missing", nil)
-                    return
-                }
-
-                guard let paymentMethodsJson = paymentMethodsJsonStr.data(using: String.Encoding.utf8) else {
-                    reject("Options Error", "'paymentMethodsJsonStr' malformed", nil)
-                    return
-                }
-
-                let paymentMethods = try RNAdyenModule.jsonDecoder.decode(PaymentMethods.self, from: paymentMethodsJson)
-
-                var configEnvironment: Environment
-                switch environment {
-                case "test":
-                    configEnvironment = Environment.test
-                case "europe":
-                    configEnvironment = Environment.liveEurope
-                case "united_states":
-                    configEnvironment = Environment.liveUnitedStates
-                case "australia":
-                    configEnvironment = Environment.liveAustralia
-                default:
-                    reject("Options Error", "'environment' malformed", nil)
-                    return
-                }
-
-                var configLocale: String?
-                if let locale = options["locale"] as? String {
-                    configLocale = locale
-                }
-
-                let apiContext = APIContext(environment: configEnvironment, clientKey: clientKey)
-
-                let dropInConfiguration = DropInComponent.Configuration(apiContext: apiContext)
-
-                guard let amountValue = amount["value"] as? Int else {
-                    reject("Options Error", "'value' missing", nil)
-                    return
-                }
-                guard let amountCurrency = amount["currency"] as? String else {
-                    reject("Options Error", "'currency' missing", nil)
-                    return
-                }
-                dropInConfiguration.payment = Payment(amount: Adyen.Amount(value: amountValue, currencyCode: amountCurrency), countryCode: countryCode)
-                dropInConfiguration.localizationParameters = LocalizationParameters(bundle: nil, tableName: nil, keySeparator: nil, locale: configLocale)
-
-                if let cardOptions = options["cardOptions"] as? [String: AnyObject] {
-                    let cardConfiguration = CardComponent.Configuration()
-
-                    // TODO more options
-
-                    dropInConfiguration.card = cardConfiguration
-                }
-
-                if let applePayOptions = options["applePayOptions"] as? [String: AnyObject] {
-                    guard let summaryItems = applePayOptions["summaryItems"] as? [[String: AnyObject]] else {
-                        reject("Options Error", "'summaryItems' missing", nil)
-                        return
-                    }
-
-                    var configSummaryItems: [PKPaymentSummaryItem] = []
-                    for summaryItem in summaryItems {
-                        guard let label = summaryItem["label"] as? String else {
-                            reject("Options Error", "'label' missing", nil)
-                            return
-                        }
-
-                        guard let amount = summaryItem["amount"] as? NSNumber else {
-                            reject("Options Error", "'amount' missing", nil)
-                            return
-                        }
-
-                        guard let paymentSummaryItemType = summaryItem["type"] as? String else {
-                            reject("Options Error", "'type' missing", nil)
-                            return
-                        }
-
-                        var configPaymentSummaryItemType: PKPaymentSummaryItemType
-                        switch paymentSummaryItemType {
-                        case "final":
-                            configPaymentSummaryItemType = PKPaymentSummaryItemType.final
-                        case "pending":
-                            configPaymentSummaryItemType = PKPaymentSummaryItemType.pending
-                        default:
-                            reject("Options Error", "'type' malformed", nil)
-                            return
-                        }
-
-                        configSummaryItems.append(PKPaymentSummaryItem(label: label, amount: NSDecimalNumber(decimal: amount.decimalValue), type: configPaymentSummaryItemType))
-                    }
-
-                    guard let merchantIdentifier = applePayOptions["merchantIdentifier"] as? String else {
-                        reject("Options Error", "'merchantIdentifier' missing", nil)
-                        return
-                    }
-
-                    let applePayConfiguration = ApplePayComponent.Configuration(summaryItems: configSummaryItems, merchantIdentifier: merchantIdentifier)
-
-                    // TODO more options
-                    dropInConfiguration.applePay = applePayConfiguration
-                }
-
-                let dropInComponent = DropInComponent(paymentMethods: paymentMethods, configuration: dropInConfiguration)
-                dropInComponent.delegate = self
-
-                RNAdyenModule.context = RNAdyenModule.Context(dropInComponent: dropInComponent, resolve: resolve, reject: reject, sendPaymentsRequestDescriptor: configSendPaymentsRequestDescriptor, sendDetailsRequestDescriptor: configSendDetailsRequestDescriptor, merchantAccount: merchantAccount, amount: RNAdyenModule.Amount(currency: amountCurrency, amount: amountValue), reference: reference)
-
-                DispatchQueue.main.async {
-                    presentedViewController.present(dropInComponent.viewController, animated: true)
-                }
-            } else {
-                reject("View Controller Error", "View Controller is nil", nil)
+        DispatchQueue.main.async {
+            if RNAdyenModule.context != nil {
+                reject("Already Running Error", "Context already in use", nil)
+                return
             }
-        } catch let error {
-            reject("Unknown Error", error.localizedDescription, error)
+
+            do {
+                if let presentedViewController = RCTPresentedViewController() {
+                    var configSendPaymentsRequestDescriptor: RequestDescriptor
+                    if let sendPaymentsRequestDescriptor = options["sendPaymentsRequestDescriptor"] as? [String: AnyObject] {
+                        guard let url = sendPaymentsRequestDescriptor["url"] as? String else {
+                            reject("Options Error", "'url' missing", nil)
+                            return
+                        }
+
+                        guard let headers = sendPaymentsRequestDescriptor["headers"] as? [String: String] else {
+                            reject("Options Error", "'headers' missing", nil)
+                            return
+                        }
+
+                        configSendPaymentsRequestDescriptor = RequestDescriptor(url: url, headers: headers)
+                    } else {
+                        reject("Options Error", "'sendPaymentsRequestDescriptor' missing", nil)
+                        return
+                    }
+
+                    var configSendDetailsRequestDescriptor: RequestDescriptor
+                    if let sendDetailsRequestDescriptor = options["sendDetailsRequestDescriptor"] as? [String: AnyObject] {
+                        guard let url = sendDetailsRequestDescriptor["url"] as? String else {
+                            reject("Options Error", "'url' missing", nil)
+                            return
+                        }
+
+                        guard let headers = sendDetailsRequestDescriptor["headers"] as? [String: String] else {
+                            reject("Options Error", "'headers' missing", nil)
+                            return
+                        }
+
+                        configSendDetailsRequestDescriptor = RequestDescriptor(url: url, headers: headers)
+                    } else {
+                        reject("Options Error", "'sendPaymentsRequestDescriptor' missing", nil)
+                        return
+                    }
+
+                    guard let paymentMethodsJsonStr = options["paymentMethodsJsonStr"] as? String else {
+                        reject("Options Error", "'paymentMethodsJsonStr' missing", nil)
+                        return
+                    }
+                    guard let clientKey = options["clientKey"] as? String else {
+                        reject("Options Error", "'clientKey' missing", nil)
+                        return
+                    }
+                    guard let merchantAccount = options["merchantAccount"] as? String else {
+                        reject("Options Error", "'merchantAccount' missing", nil)
+                        return
+                    }
+                    guard let reference = options["reference"] as? String else {
+                        reject("Options Error", "'reference' missing", nil)
+                        return
+                    }
+                    guard let environment = options["environment"] as? String else {
+                        reject("Options Error", "'environment' missing", nil)
+                        return
+                    }
+                    guard let amount = options["amount"] as? [String: AnyObject] else {
+                        reject("Options Error", "'amount' missing", nil)
+                        return
+                    }
+                    guard let countryCode = options["countryCode"] as? String else {
+                        reject("Options Error", "'countryCode' missing", nil)
+                        return
+                    }
+
+                    guard let paymentMethodsJson = paymentMethodsJsonStr.data(using: String.Encoding.utf8) else {
+                        reject("Options Error", "'paymentMethodsJsonStr' malformed", nil)
+                        return
+                    }
+
+                    let paymentMethods = try RNAdyenModule.jsonDecoder.decode(PaymentMethods.self, from: paymentMethodsJson)
+
+                    var configEnvironment: Environment
+                    switch environment {
+                    case "test":
+                        configEnvironment = Environment.test
+                    case "europe":
+                        configEnvironment = Environment.liveEurope
+                    case "united_states":
+                        configEnvironment = Environment.liveUnitedStates
+                    case "australia":
+                        configEnvironment = Environment.liveAustralia
+                    default:
+                        reject("Options Error", "'environment' malformed", nil)
+                        return
+                    }
+
+                    var configLocale: String?
+                    if let locale = options["locale"] as? String {
+                        configLocale = locale
+                    }
+
+                    let apiContext = APIContext(environment: configEnvironment, clientKey: clientKey)
+
+                    let dropInConfiguration = DropInComponent.Configuration(apiContext: apiContext)
+
+                    guard let amountValue = amount["value"] as? Int else {
+                        reject("Options Error", "'value' missing", nil)
+                        return
+                    }
+                    guard let amountCurrency = amount["currency"] as? String else {
+                        reject("Options Error", "'currency' missing", nil)
+                        return
+                    }
+                    dropInConfiguration.payment = Payment(amount: Adyen.Amount(value: amountValue, currencyCode: amountCurrency), countryCode: countryCode)
+                    dropInConfiguration.localizationParameters = LocalizationParameters(bundle: nil, tableName: nil, keySeparator: nil, locale: configLocale)
+
+                    if let cardOptions = options["cardOptions"] as? [String: AnyObject] {
+                        let cardConfiguration = CardComponent.Configuration()
+
+                        // TODO more options
+
+                        dropInConfiguration.card = cardConfiguration
+                    }
+
+                    if let applePayOptions = options["applePayOptions"] as? [String: AnyObject] {
+                        guard let summaryItems = applePayOptions["summaryItems"] as? [[String: AnyObject]] else {
+                            reject("Options Error", "'summaryItems' missing", nil)
+                            return
+                        }
+
+                        var configSummaryItems: [PKPaymentSummaryItem] = []
+                        for summaryItem in summaryItems {
+                            guard let label = summaryItem["label"] as? String else {
+                                reject("Options Error", "'label' missing", nil)
+                                return
+                            }
+
+                            guard let amount = summaryItem["amount"] as? NSNumber else {
+                                reject("Options Error", "'amount' missing", nil)
+                                return
+                            }
+
+                            guard let paymentSummaryItemType = summaryItem["type"] as? String else {
+                                reject("Options Error", "'type' missing", nil)
+                                return
+                            }
+
+                            var configPaymentSummaryItemType: PKPaymentSummaryItemType
+                            switch paymentSummaryItemType {
+                            case "final":
+                                configPaymentSummaryItemType = PKPaymentSummaryItemType.final
+                            case "pending":
+                                configPaymentSummaryItemType = PKPaymentSummaryItemType.pending
+                            default:
+                                reject("Options Error", "'type' malformed", nil)
+                                return
+                            }
+
+                            configSummaryItems.append(PKPaymentSummaryItem(label: label, amount: NSDecimalNumber(decimal: amount.decimalValue), type: configPaymentSummaryItemType))
+                        }
+
+                        guard let merchantIdentifier = applePayOptions["merchantIdentifier"] as? String else {
+                            reject("Options Error", "'merchantIdentifier' missing", nil)
+                            return
+                        }
+
+                        let applePayConfiguration = ApplePayComponent.Configuration(summaryItems: configSummaryItems, merchantIdentifier: merchantIdentifier)
+
+                        // TODO more options
+                        dropInConfiguration.applePay = applePayConfiguration
+                    }
+
+                    let dropInComponent = DropInComponent(paymentMethods: paymentMethods, configuration: dropInConfiguration)
+                    dropInComponent.delegate = self
+
+                    RNAdyenModule.context = RNAdyenModule.Context(dropInComponent: dropInComponent, resolve: resolve, reject: reject, sendPaymentsRequestDescriptor: configSendPaymentsRequestDescriptor, sendDetailsRequestDescriptor: configSendDetailsRequestDescriptor, merchantAccount: merchantAccount, amount: RNAdyenModule.Amount(currency: amountCurrency, value: amountValue), reference: reference)
+
+                    presentedViewController.present(dropInComponent.viewController, animated: true)
+
+                } else {
+                    reject("View Controller Error", "View Controller is nil", nil)
+                }
+            } catch let error {
+                reject("Unknown Error", error.localizedDescription, error)
+            }
         }
     }
 }
@@ -222,17 +223,17 @@ class RNAdyenModule: NSObject {
 extension RNAdyenModule: DropInComponentDelegate {
     struct Amount: Encodable {
         var currency: String
-        var amount: Int
+        var value: Int
 
         enum CodingKeys: String, CodingKey {
             case currency = "currency"
-            case amount = "amount"
+            case value = "value"
         }
 
         func encode(to encoder: Encoder) throws {
             var container = encoder.container(keyedBy: CodingKeys.self)
             try container.encode(currency, forKey: .currency)
-            try container.encode(amount, forKey: .amount)
+            try container.encode(value, forKey: .value)
         }
     }
 

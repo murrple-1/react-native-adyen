@@ -99,7 +99,7 @@ const App = () => {
               merchantIdentifier: "Gary's Corner Store",
             },
           });
-          Alert.alert('Response', JSON.stringify(checkoutResponse));
+          Alert.alert('Response', checkoutResponse);
         } catch (reason: unknown) {
           console.error(reason);
         }

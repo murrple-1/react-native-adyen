@@ -2,11 +2,14 @@ package com.reactnativeadyen
 
 import com.adyen.checkout.dropin.service.DropInService
 import com.adyen.checkout.dropin.service.DropInServiceResult
-import com.android.volley.Request.Method
+import com.android.volley.Request
 import com.android.volley.RequestQueue
+import com.android.volley.Response
+import com.android.volley.VolleyError
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.RequestFuture
 import com.android.volley.toolbox.Volley
+import com.facebook.react.common.StandardCharsets
 import com.reactnativeadyen.RNAdyenModule.Amount
 import java.util.concurrent.ExecutionException
 import org.json.JSONObject
@@ -16,27 +19,44 @@ class DropInServiceImpl : DropInService() {
         Volley.newRequestQueue(applicationContext)
     }
 
+    private class MyJsonObjectRequest(
+        method: Int,
+        url: String?,
+        jsonRequest: JSONObject?,
+        listener: Response.Listener<JSONObject?>?,
+        errorListener: Response.ErrorListener?,
+        private val headers: Map<String, String>
+    ) : JsonObjectRequest(method, url, jsonRequest, listener, errorListener) {
+        override fun getHeaders(): Map<String, String> {
+            return mutableMapOf<String, String>().apply {
+                putAll(super.getHeaders())
+                putAll(this@MyJsonObjectRequest.headers)
+                this["Content-Type"] = "application/json"
+            }
+        }
+    }
+
     override fun makePaymentsCall(paymentComponentJson: JSONObject): DropInServiceResult {
         val sendPaymentsRequestDescriptor = RNAdyenModule.Context.sendPaymentsRequestDescriptor as RNAdyenModule.RequestDescriptor
 
         val jsonObject = JSONObject().apply {
-            put("merchantAccount", RNAdyenModule.Context.merchantAccount as String)
+            put("merchantAccount", if (paymentComponentJson.has("merchantAccount")) paymentComponentJson.getString("merchantAccount") else RNAdyenModule.Context.merchantAccount as String)
+            put("reference", if (paymentComponentJson.has("reference")) paymentComponentJson.getString("reference") else RNAdyenModule.Context.reference as String)
             put(
                 "amount",
-                JSONObject().apply {
-                    val amount = RNAdyenModule.Context.amount as Amount
-                    put("currency", amount.currency)
-                    put("value", amount.value)
-                }
+                if (paymentComponentJson.has("amount")) paymentComponentJson.getJSONObject("amount") else
+                    JSONObject().apply {
+                        val amount = RNAdyenModule.Context.amount as Amount
+                        put("currency", amount.currency)
+                        put("value", amount.value)
+                    }
             )
-            put("reference", RNAdyenModule.Context.reference as String)
-            put("paymentMethod", paymentComponentJson)
+
+            put("paymentMethod", paymentComponentJson.getJSONObject("paymentMethod"))
         }
 
         val future: RequestFuture<JSONObject> = RequestFuture.newFuture()
-        val request = JsonObjectRequest(Method.POST, sendPaymentsRequestDescriptor.url, jsonObject, future, future)
-        request.headers.putAll(sendPaymentsRequestDescriptor.headers)
-        request.headers["Content-Type"] = "application/json"
+        val request = MyJsonObjectRequest(Request.Method.POST, sendPaymentsRequestDescriptor.url, jsonObject, future, future, sendPaymentsRequestDescriptor.headers)
         requestQueue.add(request)
 
         return this.handlePaymentsDetailsResponse(future)
@@ -46,9 +66,7 @@ class DropInServiceImpl : DropInService() {
         val sendDetailsRequestDescriptor = RNAdyenModule.Context.sendDetailsRequestDescriptor as RNAdyenModule.RequestDescriptor
 
         val future: RequestFuture<JSONObject> = RequestFuture.newFuture()
-        val request = JsonObjectRequest(Method.POST, sendDetailsRequestDescriptor.url, actionComponentJson, future, future)
-        request.headers.putAll(sendDetailsRequestDescriptor.headers)
-        request.headers["Content-Type"] = "application/json"
+        val request = MyJsonObjectRequest(Request.Method.POST, sendDetailsRequestDescriptor.url, actionComponentJson, future, future, sendDetailsRequestDescriptor.headers)
         requestQueue.add(request)
 
         return this.handlePaymentsDetailsResponse(future)
@@ -73,7 +91,14 @@ class DropInServiceImpl : DropInService() {
         } catch (e: InterruptedException) {
             return DropInServiceResult.Error(e.message, "InterruptedException")
         } catch (e: ExecutionException) {
-            return DropInServiceResult.Error(e.message, "ExecutionException")
+            val cause = e.cause
+            return if (cause is VolleyError) {
+                val responseBody = String(cause.networkResponse.data, StandardCharsets.UTF_8)
+                DropInServiceResult.Error(responseBody, "VolleyError")
+            } else {
+                val message = cause?.message
+                DropInServiceResult.Error(message ?: "Unknown Error", "ExecutionException")
+            }
         }
     }
 }
