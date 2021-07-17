@@ -7,6 +7,7 @@ import {
   StyleSheet,
   View,
   Text,
+  Platform,
 } from 'react-native';
 
 import {
@@ -38,9 +39,14 @@ const App = () => {
   const onStartPaymentPress = useCallback(() => {
     setIsLoading(true);
 
+    const hostname = Platform.select({
+      default: 'http://localhost:8000',
+      android: 'http://10.0.2.2:8000',
+    });
+
     _getPaymentMethods({
       requestDescriptor: {
-        url: 'http://localhost:8000/v67/paymentMethods',
+        url: `${hostname}/paymentMethods`,
         headers: {},
       },
       countryCode: 'US',
@@ -50,51 +56,56 @@ const App = () => {
       },
       shopperReference: environment.shopperReference,
     })
-      .then(async paymentMethodsJsonStr => {
-        try {
-          const checkoutResponse = await startPayment({
-            paymentMethodsJsonStr,
-            sendPaymentsRequestDescriptor: {
-              url: 'http://localhost:8000/v67/payments',
-              headers: {},
-            },
-            sendDetailsRequestDescriptor: {
-              url: 'http://localhost:8000/v67/payments/details',
-              headers: {},
-            },
-            clientKey: environment.clientKey,
-            environment: 'test',
-            countryCode: 'US',
-            amount: {
-              currency: 'USD',
-              value: 100,
-            },
-            locale: 'en',
-            cardOptions: {
-              shopperReference: environment.shopperReference,
-            },
-            googlePayOptions: {},
-            applePayOptions: {
-              summaryItems: [
-                {
-                  label: 'Gumball x2',
-                  amount: 0.5,
-                  type: 'final',
-                },
-                {
-                  label: 'Mars Bar x1',
-                  amount: 0.5,
-                  type: 'final',
-                },
-              ],
-              merchantIdentifier: "Gary's Corner Store",
-            },
-          });
-          Alert.alert('Response', checkoutResponse);
-        } catch (reason: unknown) {
+      .then(
+        async paymentMethodsJsonStr => {
+          try {
+            const checkoutResponse = await startPayment({
+              paymentMethodsJsonStr,
+              sendPaymentsRequestDescriptor: {
+                url: `${hostname}/payments`,
+                headers: {},
+              },
+              sendDetailsRequestDescriptor: {
+                url: `${hostname}/payments/details`,
+                headers: {},
+              },
+              clientKey: environment.clientKey,
+              environment: 'test',
+              countryCode: 'US',
+              amount: {
+                currency: 'USD',
+                value: 100,
+              },
+              locale: 'en',
+              cardOptions: {
+                shopperReference: environment.shopperReference,
+              },
+              googlePayOptions: {},
+              applePayOptions: {
+                summaryItems: [
+                  {
+                    label: 'Gumball x2',
+                    amount: 0.5,
+                    type: 'final',
+                  },
+                  {
+                    label: 'Mars Bar x1',
+                    amount: 0.5,
+                    type: 'final',
+                  },
+                ],
+                merchantIdentifier: "Gary's Corner Store",
+              },
+            });
+            Alert.alert('Response', checkoutResponse);
+          } catch (reason: unknown) {
+            console.error(reason);
+          }
+        },
+        (reason: unknown) => {
           console.error(reason);
-        }
-      })
+        },
+      )
       .finally(() => {
         setIsLoading(false);
       });

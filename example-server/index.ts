@@ -2,6 +2,8 @@ import express from 'express';
 
 import { addAsync } from '@awaitjs/express';
 
+import { json as jsonBodyParser_ } from 'body-parser';
+
 import yargs from 'yargs/yargs';
 import { hideBin } from 'yargs/helpers';
 
@@ -25,9 +27,11 @@ const args = yargs(hideBin(process.argv))
 const express_ = express();
 const app = addAsync(express_);
 
-app.postAsync('/paymentMethods', paymentMethods);
-app.postAsync('/payments', payments);
-app.postAsync('/payments/details', paymentsDetails);
+const jsonBodyParser = jsonBodyParser_();
+
+app.postAsync('/paymentMethods', jsonBodyParser, paymentMethods);
+app.postAsync('/payments', jsonBodyParser, payments);
+app.postAsync('/payments/details', jsonBodyParser, paymentsDetails);
 
 app.listen(args.port, args.hostname, () => {
   console.log(
