@@ -298,7 +298,6 @@ export type Environment = 'test' | 'europe' | 'united_states' | 'australia';
 
 export interface _GetPaymentMethodsJsonStrOptions {
   requestDescriptor: RequestDescriptor;
-  merchantAccount: string;
   countryCode?: CountryCode;
   amount?: Amount;
   shopperReference?: string;
@@ -306,7 +305,6 @@ export interface _GetPaymentMethodsJsonStrOptions {
 
 export async function _getPaymentMethods({
   requestDescriptor,
-  merchantAccount,
   countryCode,
   amount,
   shopperReference,
@@ -317,7 +315,6 @@ export async function _getPaymentMethods({
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      merchantAccount,
       countryCode,
       amount,
       shopperReference,
@@ -336,8 +333,6 @@ export interface StartPaymentOptions {
   sendPaymentsRequestDescriptor: RequestDescriptor;
   sendDetailsRequestDescriptor: RequestDescriptor;
   clientKey: string;
-  merchantAccount: string;
-  reference: string;
   environment: Environment;
   amount: Amount;
   countryCode: CountryCode;

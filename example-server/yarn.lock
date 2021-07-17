@@ -2,6 +2,11 @@
 # yarn lockfile v1
 
 
+"@awaitjs/express@^0.8.0":
+  version "0.8.0"
+  resolved "https://registry.yarnpkg.com/@awaitjs/express/-/express-0.8.0.tgz#858e888d9d14b8e68674e4289a7002834a23c37c"
+  integrity sha512-ekBl3cOBJ2vEN6GA1Tw6QWcRuzrnVo2Mg2jLwNWBiChjKcI0sWuK41N2ERhKah7zoLQ8wlqKUfmZ3T3bvojLww==
+
 "@babel/code-frame@7.12.11":
   version "7.12.11"
   resolved "https://registry.yarnpkg.com/@babel/code-frame/-/code-frame-7.12.11.tgz#f4ad435aa263db935b8f10f2c552d23fb716a63f"

@@ -23,32 +23,24 @@ class RNAdyenModule(private var reactContext: ReactApplicationContext) : ReactCo
 
     data class RequestDescriptor(val url: String, val headers: Map<String, String>)
 
-    data class Amount(val currency: String, val value: Int)
-
     object Context {
         var promise: Promise? = null
         var sendPaymentsRequestDescriptor: RequestDescriptor? = null
         var sendDetailsRequestDescriptor: RequestDescriptor? = null
-        var merchantAccount: String? = null
         var amount: Amount? = null
-        var reference: String? = null
 
-        fun setup(promise: Promise, sendPaymentsRequestDescriptor: RequestDescriptor, sendDetailsRequestDescriptor: RequestDescriptor, merchantAccount: String, amount: Amount, reference: String) {
+        fun setup(promise: Promise, sendPaymentsRequestDescriptor: RequestDescriptor, sendDetailsRequestDescriptor: RequestDescriptor, amount: Amount) {
             this.promise = promise
             this.sendPaymentsRequestDescriptor = sendPaymentsRequestDescriptor
             this.sendDetailsRequestDescriptor = sendDetailsRequestDescriptor
-            this.merchantAccount = merchantAccount
             this.amount = amount
-            this.reference = reference
         }
 
         fun reset() {
             promise = null
             sendPaymentsRequestDescriptor = null
             sendDetailsRequestDescriptor = null
-            merchantAccount = null
             amount = null
-            reference = null
         }
     }
 
@@ -80,8 +72,6 @@ class RNAdyenModule(private var reactContext: ReactApplicationContext) : ReactCo
 
             val paymentMethodsJsonStr = options.getString("paymentMethodsJsonStr") as String
             val clientKey = options.getString("clientKey") as String
-            val merchantAccount = options.getString("merchantAccount") as String
-            val reference = options.getString("reference") as String
             val environment = options.getString("environment") as String
             val amount = options.getMap("amount") as ReadableMap
 
@@ -160,7 +150,7 @@ class RNAdyenModule(private var reactContext: ReactApplicationContext) : ReactCo
                 dropInConfigurationBuilder.addGooglePayConfiguration(googlePayConfigurationBuilder.build())
             }
 
-            Context.setup(promise, configSendPaymentsRequestDescriptor, configSendDetailsRequestDescriptor, merchantAccount, Amount(amountCurrency, amountValue), reference)
+            Context.setup(promise, configSendPaymentsRequestDescriptor, configSendDetailsRequestDescriptor, configAmount)
 
             DropIn.startPayment(activity, paymentMethodsApiResponse, dropInConfigurationBuilder.build())
         }
@@ -190,5 +180,9 @@ class RNAdyenModule(private var reactContext: ReactApplicationContext) : ReactCo
         } finally {
             Context.reset()
         }
+    }
+
+    override fun onNewIntent(intent: Intent?) {
+        TODO("Not yet implemented")
     }
 }

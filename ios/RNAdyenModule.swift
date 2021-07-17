@@ -17,9 +17,7 @@ class RNAdyenModule: NSObject {
         var reject: RCTPromiseRejectBlock
         var sendPaymentsRequestDescriptor: RequestDescriptor
         var sendDetailsRequestDescriptor: RequestDescriptor
-        var merchantAccount: String
-        var amount: RNAdyenModule.Amount
-        var reference: String
+        var amount: Amount
     }
 
     @objc(requiresMainQueueSetup) static func requiresMainQueueSetup() -> Bool {
@@ -84,14 +82,6 @@ class RNAdyenModule: NSObject {
                         reject("Options Error", "'clientKey' missing", nil)
                         return
                     }
-                    guard let merchantAccount = options["merchantAccount"] as? String else {
-                        reject("Options Error", "'merchantAccount' missing", nil)
-                        return
-                    }
-                    guard let reference = options["reference"] as? String else {
-                        reject("Options Error", "'reference' missing", nil)
-                        return
-                    }
                     guard let environment = options["environment"] as? String else {
                         reject("Options Error", "'environment' missing", nil)
                         return
@@ -144,7 +134,7 @@ class RNAdyenModule: NSObject {
                         reject("Options Error", "'currency' missing", nil)
                         return
                     }
-                    dropInConfiguration.payment = Payment(amount: Adyen.Amount(value: amountValue, currencyCode: amountCurrency), countryCode: countryCode)
+                    dropInConfiguration.payment = Payment(amount: Amount(value: amountValue, currencyCode: amountCurrency), countryCode: countryCode)
                     dropInConfiguration.localizationParameters = LocalizationParameters(bundle: nil, tableName: nil, keySeparator: nil, locale: configLocale)
 
                     if let cardOptions = options["cardOptions"] as? [String: AnyObject] {
@@ -206,7 +196,7 @@ class RNAdyenModule: NSObject {
                     let dropInComponent = DropInComponent(paymentMethods: paymentMethods, configuration: dropInConfiguration)
                     dropInComponent.delegate = self
 
-                    RNAdyenModule.context = RNAdyenModule.Context(dropInComponent: dropInComponent, resolve: resolve, reject: reject, sendPaymentsRequestDescriptor: configSendPaymentsRequestDescriptor, sendDetailsRequestDescriptor: configSendDetailsRequestDescriptor, merchantAccount: merchantAccount, amount: RNAdyenModule.Amount(currency: amountCurrency, value: amountValue), reference: reference)
+                    RNAdyenModule.context = RNAdyenModule.Context(dropInComponent: dropInComponent, resolve: resolve, reject: reject, sendPaymentsRequestDescriptor: configSendPaymentsRequestDescriptor, sendDetailsRequestDescriptor: configSendDetailsRequestDescriptor, amount: Amount(value: amountValue, currencyCode: amountCurrency))
 
                     presentedViewController.present(dropInComponent.viewController, animated: true)
 
@@ -221,41 +211,19 @@ class RNAdyenModule: NSObject {
 }
 
 extension RNAdyenModule: DropInComponentDelegate {
-    struct Amount: Encodable {
-        var currency: String
-        var value: Int
-
-        enum CodingKeys: String, CodingKey {
-            case currency = "currency"
-            case value = "value"
-        }
-
-        func encode(to encoder: Encoder) throws {
-            var container = encoder.container(keyedBy: CodingKeys.self)
-            try container.encode(currency, forKey: .currency)
-            try container.encode(value, forKey: .value)
-        }
-    }
-
     struct PaymentsRequestBody: Encodable {
-        var merchantAccount: String
-        var amount: RNAdyenModule.Amount
-        var reference: String
+        var amount: Amount
         var paymentMethod: AnyEncodable
 
         enum CodingKeys: String, CodingKey {
-            case merchantAccount = "merchantAccount"
             case amount = "amount"
-            case reference = "reference"
             case paymentMethod = "paymentMethod"
         }
 
         func encode(to encoder: Encoder) throws {
             var container = encoder.container(keyedBy: CodingKeys.self)
-            try container.encode(merchantAccount, forKey: .merchantAccount)
-            try container.encode(amount, forKey: .amount)
-            try container.encode(reference, forKey: .reference)
             try container.encode(paymentMethod, forKey: .paymentMethod)
+            try container.encode(amount, forKey: .amount)
         }
     }
 
@@ -284,7 +252,14 @@ extension RNAdyenModule: DropInComponentDelegate {
                 if let url = URL(string: context.sendPaymentsRequestDescriptor.url) {
                     var request = URLRequest(url: url)
 
-                    let paymentsBody = PaymentsRequestBody(merchantAccount: context.merchantAccount, amount: context.amount, reference: context.reference, paymentMethod: data.paymentMethod.encodable)
+                    var amount: Amount
+                    if let dataAmount = data.amount {
+                        amount = dataAmount
+                    } else {
+                        amount = context.amount
+                    }
+
+                    let paymentsBody = PaymentsRequestBody(amount: amount, paymentMethod: data.paymentMethod.encodable)
                     let json = try RNAdyenModule.jsonEncoder.encode(paymentsBody)
 
                     for (headerKey, headerValue) in context.sendPaymentsRequestDescriptor.headers {

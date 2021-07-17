@@ -40,12 +40,9 @@ const App = () => {
 
     _getPaymentMethods({
       requestDescriptor: {
-        url: `${environment.adyenCheckoutHost}/v67/paymentMethods`,
-        headers: {
-          'X-API-Key': environment.apiKey,
-        },
+        url: 'http://localhost:8000/v67/paymentMethods',
+        headers: {},
       },
-      merchantAccount: environment.merchantAccount,
       countryCode: 'US',
       amount: {
         currency: 'USD',
@@ -58,20 +55,14 @@ const App = () => {
           const checkoutResponse = await startPayment({
             paymentMethodsJsonStr,
             sendPaymentsRequestDescriptor: {
-              url: `${environment.adyenCheckoutHost}/v67/payments`,
-              headers: {
-                'X-API-Key': environment.apiKey,
-              },
+              url: 'http://localhost:8000/v67/payments',
+              headers: {},
             },
             sendDetailsRequestDescriptor: {
-              url: `${environment.adyenCheckoutHost}/v67/payments/details`,
-              headers: {
-                'X-API-Key': environment.apiKey,
-              },
+              url: 'http://localhost:8000/v67/payments/details',
+              headers: {},
             },
             clientKey: environment.clientKey,
-            merchantAccount: environment.merchantAccount,
-            reference: '12345',
             environment: 'test',
             countryCode: 'US',
             amount: {

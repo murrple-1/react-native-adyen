@@ -1,5 +1,6 @@
 package com.reactnativeadyen
 
+import com.adyen.checkout.components.model.payments.Amount
 import com.adyen.checkout.dropin.service.DropInService
 import com.adyen.checkout.dropin.service.DropInServiceResult
 import com.android.volley.Request
@@ -10,7 +11,6 @@ import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.RequestFuture
 import com.android.volley.toolbox.Volley
 import com.facebook.react.common.StandardCharsets
-import com.reactnativeadyen.RNAdyenModule.Amount
 import java.util.concurrent.ExecutionException
 import org.json.JSONObject
 
@@ -40,8 +40,6 @@ class DropInServiceImpl : DropInService() {
         val sendPaymentsRequestDescriptor = RNAdyenModule.Context.sendPaymentsRequestDescriptor as RNAdyenModule.RequestDescriptor
 
         val jsonObject = JSONObject().apply {
-            put("merchantAccount", if (paymentComponentJson.has("merchantAccount")) paymentComponentJson.getString("merchantAccount") else RNAdyenModule.Context.merchantAccount as String)
-            put("reference", if (paymentComponentJson.has("reference")) paymentComponentJson.getString("reference") else RNAdyenModule.Context.reference as String)
             put(
                 "amount",
                 if (paymentComponentJson.has("amount")) paymentComponentJson.getJSONObject("amount") else
