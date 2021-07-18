@@ -6,7 +6,17 @@ import { v4 as uuid4 } from 'uuid';
 
 import { environment } from './environment';
 
+let verbose = false;
+
+export function _setVerbose(verbose_: boolean) {
+  verbose = verbose_;
+}
+
 export const paymentMethods: RequestHandler = async (req, res) => {
+  if (verbose) {
+    console.log('JSON Request Body:', JSON.stringify(req.body, null, 2));
+  }
+
   const { countryCode, amount, shopperReference, channel } = req.body;
 
   const response = await axios({
@@ -31,6 +41,10 @@ export const paymentMethods: RequestHandler = async (req, res) => {
 };
 
 export const payments: RequestHandler = async (req, res) => {
+  if (verbose) {
+    console.log('JSON Request Body:', JSON.stringify(req.body, null, 2));
+  }
+
   const { amount, paymentMethod } = req.body;
 
   const response = await axios({
@@ -53,6 +67,10 @@ export const payments: RequestHandler = async (req, res) => {
 };
 
 export const paymentsDetails: RequestHandler = async (req, res) => {
+  if (verbose) {
+    console.log('JSON Request Body:', JSON.stringify(req.body, null, 2));
+  }
+
   const response = await axios({
     url: `${environment.adyenCheckoutHost}/v67/payments/details`,
     headers: {
