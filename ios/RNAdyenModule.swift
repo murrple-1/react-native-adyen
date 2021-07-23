@@ -138,9 +138,133 @@ class RNAdyenModule: NSObject {
                     dropInConfiguration.localizationParameters = LocalizationParameters(bundle: nil, tableName: nil, keySeparator: nil, locale: configLocale)
 
                     if let cardOptions = options["cardOptions"] as? [String: AnyObject] {
-                        let cardConfiguration = CardComponent.Configuration()
+                        var cardConfiguration = CardComponent.Configuration()
 
-                        // TODO more options
+                        if let allowedCardTypes = cardOptions["allowedCardTypes"] as? [String] {
+                            var configAllowedCardTypes: [CardType] = []
+                            for allowedCardType in allowedCardTypes {
+                                switch allowedCardType {
+                                case "accel":
+                                    configAllowedCardTypes.append(CardType.accel)
+                                case "alphaBankBonusMasterCard":
+                                    configAllowedCardTypes.append(CardType.alphaBankBonusMasterCard)
+                                case "alphaBankBonusVISA":
+                                    configAllowedCardTypes.append(CardType.alphaBankBonusVISA)
+                                case "argencard":
+                                    configAllowedCardTypes.append(CardType.argencard)
+                                case "americanExpress":
+                                    configAllowedCardTypes.append(CardType.americanExpress)
+                                case "bcmc":
+                                    configAllowedCardTypes.append(CardType.bcmc)
+                                case "bijenkorfCard":
+                                    configAllowedCardTypes.append(CardType.bijenkorfCard)
+                                case "cabal":
+                                    configAllowedCardTypes.append(CardType.cabal)
+                                case "carteBancaire":
+                                    configAllowedCardTypes.append(CardType.carteBancaire)
+                                case "cencosud":
+                                    configAllowedCardTypes.append(CardType.cencosud)
+                                case "chequeDejeneur":
+                                    configAllowedCardTypes.append(CardType.chequeDejeneur)
+                                case "chinaUnionPay":
+                                    configAllowedCardTypes.append(CardType.chinaUnionPay)
+                                case "codensa":
+                                    configAllowedCardTypes.append(CardType.codensa)
+                                case "creditUnion24":
+                                    configAllowedCardTypes.append(CardType.creditUnion24)
+                                case "dankort":
+                                    configAllowedCardTypes.append(CardType.dankort)
+                                case "dankortVISA":
+                                    configAllowedCardTypes.append(CardType.dankortVISA)
+                                case "diners":
+                                    configAllowedCardTypes.append(CardType.diners)
+                                case "discover":
+                                    configAllowedCardTypes.append(CardType.discover)
+                                case "elo":
+                                    configAllowedCardTypes.append(CardType.elo)
+                                case "forbrugsforeningen":
+                                    configAllowedCardTypes.append(CardType.forbrugsforeningen)
+                                case "hiper":
+                                    configAllowedCardTypes.append(CardType.hiper)
+                                case "hipercard":
+                                    configAllowedCardTypes.append(CardType.hipercard)
+                                case "jcb":
+                                    configAllowedCardTypes.append(CardType.jcb)
+                                case "karenMillen":
+                                    configAllowedCardTypes.append(CardType.karenMillen)
+                                case "kcp":
+                                    configAllowedCardTypes.append(CardType.kcp)
+                                case "laser":
+                                    configAllowedCardTypes.append(CardType.laser)
+                                case "maestro":
+                                    configAllowedCardTypes.append(CardType.maestro)
+                                case "maestroUK":
+                                    configAllowedCardTypes.append(CardType.maestroUK)
+                                case "masterCard":
+                                    configAllowedCardTypes.append(CardType.masterCard)
+                                case "mir":
+                                    configAllowedCardTypes.append(CardType.mir)
+                                case "naranja":
+                                    configAllowedCardTypes.append(CardType.naranja)
+                                case "netplus":
+                                    configAllowedCardTypes.append(CardType.netplus)
+                                case "nyce":
+                                    configAllowedCardTypes.append(CardType.nyce)
+                                case "oasis":
+                                    configAllowedCardTypes.append(CardType.oasis)
+                                case "pulse":
+                                    configAllowedCardTypes.append(CardType.pulse)
+                                case "shopping":
+                                    configAllowedCardTypes.append(CardType.shopping)
+                                case "solo":
+                                    configAllowedCardTypes.append(CardType.solo)
+                                case "star":
+                                    configAllowedCardTypes.append(CardType.star)
+                                case "troy":
+                                    configAllowedCardTypes.append(CardType.troy)
+                                case "uatp":
+                                    configAllowedCardTypes.append(CardType.uatp)
+                                case "visa":
+                                    configAllowedCardTypes.append(CardType.visa)
+                                case "warehouse":
+                                    configAllowedCardTypes.append(CardType.warehouse)
+                                default:
+                                    reject("Options Error", "'allowedCardTypes' element malformed", nil)
+                                    return
+                                }
+                            }
+
+                            cardConfiguration.allowedCardTypes = configAllowedCardTypes
+                        }
+
+                        if let billingAddressMode = cardOptions["billingAddressMode"] as? String {
+                            var configBillingAddressMode: CardComponent.AddressFormType
+                            switch billingAddressMode {
+                            case "full":
+                                configBillingAddressMode = CardComponent.AddressFormType.full
+                            case "none":
+                                configBillingAddressMode = CardComponent.AddressFormType.none
+                            case "postalCode":
+                                configBillingAddressMode = CardComponent.AddressFormType.postalCode
+                            default:
+                                reject("Options Error", "'billingAddressMode' malformed", nil)
+                                return
+                            }
+
+                            cardConfiguration.billingAddressMode = configBillingAddressMode
+                        }
+
+                        if let showsHolderNameField = cardOptions["showsHolderNameField"] as? Bool {
+                            cardConfiguration.showsHolderNameField = showsHolderNameField
+                        }
+
+                        if let showsSecurityCodeField = cardOptions["showsSecurityCodeField"] as? Bool {
+                            cardConfiguration.showsSecurityCodeField = showsSecurityCodeField
+                        }
+
+                        if let showsStorePaymentMethodField = cardOptions["showsStorePaymentMethodField"] as? Bool {
+                            cardConfiguration.showsStorePaymentMethodField = showsStorePaymentMethodField
+                        }
 
                         dropInConfiguration.card = cardConfiguration
                     }
@@ -187,9 +311,56 @@ class RNAdyenModule: NSObject {
                             return
                         }
 
-                        let applePayConfiguration = ApplePayComponent.Configuration(summaryItems: configSummaryItems, merchantIdentifier: merchantIdentifier)
+                        var applePayConfiguration = ApplePayComponent.Configuration(summaryItems: configSummaryItems, merchantIdentifier: merchantIdentifier)
 
-                        // TODO more options
+                        if let requiredBillingContactFields = applePayOptions["requiredBillingContactFields"] as? [String] {
+                            var configRequiredBillingContactFields = Set<PKContactField>()
+                            for requiredBillingContactField in requiredBillingContactFields {
+                                switch requiredBillingContactField {
+                                case "emailAddress":
+                                    configRequiredBillingContactFields.insert(PKContactField.emailAddress)
+                                case "name":
+                                    configRequiredBillingContactFields.insert(PKContactField.name)
+                                case "phoneNumber":
+                                    configRequiredBillingContactFields.insert(PKContactField.phoneNumber)
+                                case "phoneticName":
+                                    configRequiredBillingContactFields.insert(PKContactField.phoneticName)
+                                case "postalAddress":
+                                    configRequiredBillingContactFields.insert(PKContactField.postalAddress)
+                                default:
+                                    reject("Options Error", "'requiredBillingContactFields' element malformed", nil)
+                                    return
+                                }
+                            }
+
+                            applePayConfiguration.requiredBillingContactFields = configRequiredBillingContactFields // ignored in iOS 10.*
+                        }
+
+                        if let requiredShippingContactFields = applePayOptions["requiredShippingContactFields"] as? [String] {
+                            var configRequiredShippingContactFields = Set<PKContactField>()
+                            for requiredShippingContactField in requiredShippingContactFields {
+                                switch requiredShippingContactField {
+                                case "emailAddress":
+                                    configRequiredShippingContactFields.insert(PKContactField.emailAddress)
+                                case "name":
+                                    configRequiredShippingContactFields.insert(PKContactField.name)
+                                case "phoneNumber":
+                                    configRequiredShippingContactFields.insert(PKContactField.phoneNumber)
+                                case "phoneticName":
+                                    configRequiredShippingContactFields.insert(PKContactField.phoneticName)
+                                case "postalAddress":
+                                    configRequiredShippingContactFields.insert(PKContactField.postalAddress)
+                                default:
+                                    reject("Options Error", "'requiredBillingContactFields' element malformed", nil)
+                                    return
+                                }
+                            }
+
+                            applePayConfiguration.requiredShippingContactFields = configRequiredShippingContactFields // ignored in iOS 10.*
+                        }
+
+                        // TODO implement applePayConfiguration.billingContact
+
                         dropInConfiguration.applePay = applePayConfiguration
                     }
 

@@ -2,7 +2,9 @@ import { NativeModules, Platform } from 'react-native';
 
 const { RNAdyenModule } = NativeModules;
 
-// from https://docs.adyen.com/account/supported-currencies
+/**
+ * Currencies supported. Taken from https://docs.adyen.com/account/supported-currencies
+ */
 export type CurrencyType =
   | 'AUD'
   | 'USD'
@@ -32,7 +34,9 @@ export type CurrencyType =
   | 'INR'
   | 'MYR';
 
-// from https://datahub.io/core/country-list
+/**
+ * Country Codes. At this time, unsure which are supported by Adyen, but this is the complete list in the requisite format. Taken from https://datahub.io/core/country-list
+ */
 export type CountryCode =
   | 'AF'
   | 'AX'
@@ -284,16 +288,39 @@ export type CountryCode =
   | 'ZM'
   | 'ZW';
 
+/**
+ * Description of how to connect to your server.
+ * At a few points in the process, `POST` requests will be sent with JSON payloads. These must be passed along to the relevant Adyen endpoints.
+ */
 export interface RequestDescriptor {
+  /**
+   * Complete endpoint URL which will be POST'ed to.
+   */
   url: string;
+
+  /**
+   * Additional headers to be sent to the endpoint. Likely useful if your server uses `X-API-Key` or some-such headers.
+   */
   headers: Record<string, string>;
 }
 
+/**
+ * The currency type and value (in minor units) of the payment.
+ */
 export interface Amount {
+  /**
+   * The currency type of the payment.
+   */
   currency: CurrencyType;
+  /**
+   * The value of the payment (in minor units).
+   */
   value: number;
 }
 
+/**
+ * Adyen's supported test and production environments.
+ */
 export type Environment = 'test' | 'europe' | 'united_states' | 'australia';
 
 export interface _GetPaymentMethodsJsonStrOptions {
@@ -303,6 +330,9 @@ export interface _GetPaymentMethodsJsonStrOptions {
   shopperReference?: string;
 }
 
+/**
+ * This method is not strictly recommended for use in your app, but should give you a starting point on how to get the /paymentMethods JSON string, which is necessary for `startPayment()`.
+ */
 export async function _getPaymentMethods({
   requestDescriptor,
   countryCode,
@@ -328,19 +358,129 @@ export async function _getPaymentMethods({
   return await response.text();
 }
 
+/**
+ * Card types supported by Adyen, eg. Mastercard, Visa, Diner's Club, etc.
+ */
+export type CardType =
+  | 'accel' // Accel
+  | 'alphaBankBonusMasterCard' // Alpha Bank Bonus MasterCard
+  | 'alphaBankBonusVISA' // Alpha Bank Bonus VISA
+  | 'argencard' // Argencard
+  | 'americanExpress' // American Express
+  | 'bcmc' // BCMC
+  | 'bijenkorfCard' // de Bijenkorf Card
+  | 'cabal' // Cabal
+  | 'carteBancaire' // Carte Bancaire
+  | 'cencosud' // Cencosud
+  | 'chequeDejeneur' // Chèque Déjeuner
+  | 'chinaUnionPay' // China UnionPay
+  | 'codensa' // Codensa
+  | 'creditUnion24' // Credit Union 24
+  | 'dankort' // Dankort
+  | 'dankortVISA' // Dankort VISA
+  | 'diners' // Diners Club
+  | 'discover' // Discover
+  | 'elo' // Elo
+  | 'forbrugsforeningen' // Forbrugsforeningen
+  | 'hiper' // Hiper
+  | 'hipercard' // Hipercard
+  | 'jcb' // JCB
+  | 'karenMillen' // KarenMillen
+  | 'kcp' // Korea Cyber Payment
+  | 'laser' // Laser (Discontinued in 2014)
+  | 'maestro' // Maestro
+  | 'maestroUK' // Maestro UK
+  | 'masterCard' // MasterCard
+  | 'mir' // Mir
+  | 'naranja' // Naranja
+  | 'netplus' // Net+
+  | 'nyce' // NYCE
+  | 'oasis' // Oasis
+  | 'pulse' // Pulse
+  | 'shopping' // Shopping
+  | 'solo' // Solo
+  | 'star' // STAR
+  | 'troy' // Troy
+  | 'uatp' // Universal Air Travel Plan
+  | 'visa' // VISA
+  | 'warehouse'; // The Warehouse
+
+export type ApplePayContactField =
+  | 'emailAddress'
+  | 'name'
+  | 'phoneNumber'
+  | 'phoneticName'
+  | 'postalAddress';
+
 export interface StartPaymentOptions {
+  /**
+   * The complete, unabridged response from Adyen's `/paymentMethods` endpoint. This is to be treated as a blackbox, as Adyen internally decodes it into something useful.
+   */
   paymentMethodsJsonStr: string;
+  /**
+   * Description of your server's endpoint which will receive partial data for sending along to Adyen's `/payment` endpoint.
+   */
   sendPaymentsRequestDescriptor: RequestDescriptor;
+  /**
+   * Description of your server's endpoint which will receive a blob of data for sending along to Adyen's `/payment/details` endpoint.
+   */
   sendDetailsRequestDescriptor: RequestDescriptor;
+  /**
+   * Adyen-provided Client Key.
+   */
   clientKey: string;
+  /**
+   * The Adyen environment you are working in.
+   */
   environment: Environment;
+  /**
+   * The amount of the payment.
+   */
   amount: Amount;
+  /**
+   * The country code of the country in which payment is received.
+   */
   countryCode: CountryCode;
+  /**
+   * The locale to display/translate the Adyen component for. If not provided, Adyen will choose a default locale to display (likely the locale of the app's device).
+   */
   locale?: string;
+  /**
+   * Options to customize the credit card payment component.
+   */
   cardOptions?: {
+    /**
+     * Used by Android.
+     */
     shopperReference?: string;
+    /**
+     * Used by iOS.
+     */
+    allowedCardTypes?: CardType[];
+    /**
+     * Used by iOS.
+     */
+    billingAddressMode?: 'full' | 'none' | 'postalCode';
+    /**
+     * Used by iOS.
+     */
+    showsHolderNameField?: boolean;
+    /**
+     * Used by iOS.
+     */
+    showsSecurityCodeField?: boolean;
+    /**
+     * Used by iOS.
+     */
+    showsStorePaymentMethodField?: boolean;
   };
+  /**
+   * Options to customize the Google Pay component. Used by Android.
+   */
   googlePayOptions?: {};
+  /**
+   * Options to customize the Apple Pay component. Used by iOS.
+   */
   applePayOptions?: {
     summaryItems: {
       label: string;
@@ -348,12 +488,56 @@ export interface StartPaymentOptions {
       type: 'final' | 'pending';
     }[];
     merchantIdentifier: string;
+    requiredBillingContactFields?: ApplePayContactField[]; // ignored in iOS 10.*
+    requiredShippingContactFields?: ApplePayContactField[]; // ignored in iOS 10.*
   };
 }
 
-export async function startPayment(options: StartPaymentOptions) {
+/**
+ * Result codes returned by Adyen after a successful or unsuccessful payment.
+ */
+export enum Result {
+  /**
+   * Description: The payment was successful.
+   *
+   * Action to take: Inform the shopper that the payment was successful.
+   */
+  Authorised,
+  /**
+   * Description: Inform the shopper that there was an error processing their payment.
+   *
+   * Action to take: You'll receive a `refusalReason` in the same response, indicating the cause of the error.
+   */
+  Error,
+  /**
+   * Description: The shopper has completed the payment but the final result is not yet known.
+   *
+   * Action to take: Inform the shopper that you've received their order, and are waiting for the payment to be completed. You will receive the final result of the payment in an [AUTHORISATION notification](https://docs.adyen.com/development-resources/webhooks/understand-notifications).
+   */
+  Pending,
+  /**
+   * Description: The payment was refused.
+   *
+   * Action to take: Inform the shopper that the payment was refused. Ask the shopper to try the payment again using a different payment method or card.
+   */
+  Refused,
+  /**
+   * Description: For some payment methods, it can take some time before the final status of the payment is known.
+   *
+   * Action to take: Inform the shopper that you've received their order, and are waiting for the payment to clear. You will receive the final result of the payment in an [AUTHORISATION notification](https://docs.adyen.com/development-resources/webhooks/understand-notifications).
+   */
+  Received,
+}
+
+/**
+ * This is the singular function you must call to display the Drop-In component atop your app.
+ */
+export async function startPayment(
+  options: StartPaymentOptions,
+): Promise<Result> {
   const [checkoutResponse] = (await RNAdyenModule.startPayment(options)) as [
     string,
   ];
-  return checkoutResponse;
+  // TODO this is wrong now
+  return checkoutResponse === 'Authorised' ? Result.Authorised : Result.Error;
 }
