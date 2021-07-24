@@ -37,37 +37,63 @@ class DropInServiceImpl : DropInService() {
     }
 
     override fun makePaymentsCall(paymentComponentJson: JSONObject): DropInServiceResult {
-        val sendPaymentsRequestDescriptor = RNAdyenModule.Context.sendPaymentsRequestDescriptor as RNAdyenModule.RequestDescriptor
+        try {
+            val sendPaymentsRequestDescriptor =
+                RNAdyenModule.Context.sendPaymentsRequestDescriptor as RNAdyenModule.RequestDescriptor
 
-        val jsonObject = JSONObject().apply {
-            put(
-                "amount",
-                if (paymentComponentJson.has("amount")) paymentComponentJson.getJSONObject("amount") else
-                    JSONObject().apply {
-                        val amount = RNAdyenModule.Context.amount as Amount
-                        put("currency", amount.currency)
-                        put("value", amount.value)
-                    }
+            val jsonObject = JSONObject().apply {
+                put(
+                    "amount",
+                    if (paymentComponentJson.has("amount")) paymentComponentJson.getJSONObject("amount") else
+                        JSONObject().apply {
+                            val amount = RNAdyenModule.Context.amount as Amount
+                            put("currency", amount.currency)
+                            put("value", amount.value)
+                        }
+                )
+
+                put("paymentMethod", paymentComponentJson.getJSONObject("paymentMethod"))
+            }
+
+            val future: RequestFuture<JSONObject> = RequestFuture.newFuture()
+            val request = MyJsonObjectRequest(
+                Request.Method.POST,
+                sendPaymentsRequestDescriptor.url,
+                jsonObject,
+                future,
+                future,
+                sendPaymentsRequestDescriptor.headers
             )
+            requestQueue.add(request)
 
-            put("paymentMethod", paymentComponentJson.getJSONObject("paymentMethod"))
+            return this.handlePaymentsDetailsResponse(future)
+        } catch (e: Throwable) {
+            RNAdyenModule.Context.promise?.reject(e)
+            throw e
         }
-
-        val future: RequestFuture<JSONObject> = RequestFuture.newFuture()
-        val request = MyJsonObjectRequest(Request.Method.POST, sendPaymentsRequestDescriptor.url, jsonObject, future, future, sendPaymentsRequestDescriptor.headers)
-        requestQueue.add(request)
-
-        return this.handlePaymentsDetailsResponse(future)
     }
 
     override fun makeDetailsCall(actionComponentJson: JSONObject): DropInServiceResult {
-        val sendDetailsRequestDescriptor = RNAdyenModule.Context.sendDetailsRequestDescriptor as RNAdyenModule.RequestDescriptor
+        try {
+            val sendDetailsRequestDescriptor =
+                RNAdyenModule.Context.sendDetailsRequestDescriptor as RNAdyenModule.RequestDescriptor
 
-        val future: RequestFuture<JSONObject> = RequestFuture.newFuture()
-        val request = MyJsonObjectRequest(Request.Method.POST, sendDetailsRequestDescriptor.url, actionComponentJson, future, future, sendDetailsRequestDescriptor.headers)
-        requestQueue.add(request)
+            val future: RequestFuture<JSONObject> = RequestFuture.newFuture()
+            val request = MyJsonObjectRequest(
+                Request.Method.POST,
+                sendDetailsRequestDescriptor.url,
+                actionComponentJson,
+                future,
+                future,
+                sendDetailsRequestDescriptor.headers
+            )
+            requestQueue.add(request)
 
-        return this.handlePaymentsDetailsResponse(future)
+            return this.handlePaymentsDetailsResponse(future)
+        } catch (e: Throwable) {
+            RNAdyenModule.Context.promise?.reject(e)
+            throw e
+        }
     }
 
     private fun handlePaymentsDetailsResponse(future: RequestFuture<JSONObject>): DropInServiceResult {

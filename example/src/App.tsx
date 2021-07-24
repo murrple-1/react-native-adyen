@@ -13,6 +13,7 @@ import {
 import {
   _getPaymentMethods,
   startPayment,
+  ResultCode,
 } from '@murrple_1/react-native-adyen';
 
 import { environment } from './environment';
@@ -97,7 +98,31 @@ const App = () => {
                 merchantIdentifier: "Gary's Corner Store",
               },
             });
-            Alert.alert('Response', checkoutResponse);
+            let alertStr: string;
+            switch (checkoutResponse.resultCode) {
+              case ResultCode.Authorised: {
+                alertStr = 'Authorised';
+                break;
+              }
+              case ResultCode.Error: {
+                alertStr = `Error: ${checkoutResponse.refusalReason}`;
+                break;
+              }
+              case ResultCode.Pending: {
+                alertStr = 'Pending';
+                break;
+              }
+              case ResultCode.Received: {
+                alertStr = 'Received';
+                break;
+              }
+              case ResultCode.Refused: {
+                alertStr = 'Refused';
+                break;
+              }
+            }
+
+            Alert.alert('Response', alertStr);
           } catch (reason: unknown) {
             console.error(reason);
           }

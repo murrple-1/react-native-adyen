@@ -482,21 +482,45 @@ export interface StartPaymentOptions {
    * Options to customize the Apple Pay component. Used by iOS.
    */
   applePayOptions?: {
+    /**
+     * Receipt-like entries describing what is being purchased, and how much each item costs.
+     */
     summaryItems: {
+      /**
+       * Label of the entry.
+       * @example "12oz Premium Shampoo x 2"
+       */
       label: string;
+      /**
+       * Cost of the entry.
+       * @example 3.99
+       */
       amount: number;
+      /**
+       * Entry type. Is the entry final, or an estimated price?
+       */
       type: 'final' | 'pending';
     }[];
+    /**
+     * Name of your "shop".
+     * @example "My Board Game Shop"
+     */
     merchantIdentifier: string;
-    requiredBillingContactFields?: ApplePayContactField[]; // ignored in iOS 10.*
-    requiredShippingContactFields?: ApplePayContactField[]; // ignored in iOS 10.*
+    /**
+     * List of fields required in the Billing address section. Ignored in iOS 10.*, according to Adyen docs.
+     */
+    requiredBillingContactFields?: ApplePayContactField[];
+    /**
+     * List of fields required in the Shipping address section. Ignored in iOS 10.*, according to Adyen docs.
+     */
+    requiredShippingContactFields?: ApplePayContactField[];
   };
 }
 
 /**
  * Result codes returned by Adyen after a successful or unsuccessful payment.
  */
-export enum Result {
+export enum ResultCode {
   /**
    * Description: The payment was successful.
    *
@@ -529,15 +553,61 @@ export enum Result {
   Received,
 }
 
+interface _Result {
+  resultCode:
+    | ResultCode.Authorised
+    | ResultCode.Pending
+    | ResultCode.Received
+    | ResultCode.Refused;
+}
+
+interface _ErrorResult {
+  resultCode: ResultCode.Error;
+  refusalReason: string;
+}
+
+/**
+ * Object returned after the payment process has completed, describing its outcome.
+ */
+export type Result = _Result | _ErrorResult;
+
 /**
  * This is the singular function you must call to display the Drop-In component atop your app.
  */
 export async function startPayment(
   options: StartPaymentOptions,
 ): Promise<Result> {
-  const [checkoutResponse] = (await RNAdyenModule.startPayment(options)) as [
-    string,
-  ];
-  // TODO this is wrong now
-  return checkoutResponse === 'Authorised' ? Result.Authorised : Result.Error;
+  const response = (await RNAdyenModule.startPayment(options)) as string[];
+  const resultCode = response[0];
+  switch (resultCode) {
+    case 'Authorised': {
+      return {
+        resultCode: ResultCode.Authorised,
+      };
+    }
+    case 'Error': {
+      return {
+        resultCode: ResultCode.Error,
+        refusalReason: response[1] as string,
+      };
+    }
+    case 'Pending': {
+      return {
+        resultCode: ResultCode.Pending,
+      };
+    }
+    case 'Refused': {
+      return {
+        resultCode: ResultCode.Refused,
+      };
+    }
+    case 'Received': {
+      return {
+        resultCode: ResultCode.Received,
+      };
+    }
+    default: {
+      throw new Error('unknown');
+    }
+  }
 }

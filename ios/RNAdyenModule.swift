@@ -503,7 +503,11 @@ extension RNAdyenModule: DropInComponentDelegate {
                 }
             } else if let refusalReason = response.refusalReason {
                 DispatchQueue.main.async {
-                    self.handleError(component: component, reject: context.reject, code: "Payment Refused", message: refusalReason, error: nil)
+                    context.resolve(["Error", refusalReason])
+
+                    component.viewController.dismiss(animated: true) {
+                        RNAdyenModule.context = nil
+                    }
                 }
             } else {
                 DispatchQueue.main.async {

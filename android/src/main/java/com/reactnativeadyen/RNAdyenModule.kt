@@ -46,113 +46,136 @@ class RNAdyenModule(private var reactContext: ReactApplicationContext) : ReactCo
 
     @ReactMethod
     fun startPayment(options: ReadableMap, promise: Promise) {
-        val activity = currentActivity
-        if (activity != null) {
-            var configSendPaymentsRequestDescriptor: RequestDescriptor
-            (options.getMap("sendPaymentsRequestDescriptor") as ReadableMap).run {
-                val url = this.getString("url") as String
-                val headers = this.getMap("headers") as ReadableMap
-                val configHeaders = mutableMapOf<String, String>()
-                for ((headerKey, headerValue) in headers.entryIterator) {
-                    configHeaders[headerKey] = headerValue as String
-                }
-                configSendPaymentsRequestDescriptor = RequestDescriptor(url, configHeaders)
-            }
-
-            var configSendDetailsRequestDescriptor: RequestDescriptor
-            (options.getMap("sendDetailsRequestDescriptor") as ReadableMap).run {
-                val url = this.getString("url") as String
-                val headers = this.getMap("headers") as ReadableMap
-                val configHeaders = mutableMapOf<String, String>()
-                for ((headerKey, headerValue) in headers.entryIterator) {
-                    configHeaders[headerKey] = headerValue as String
-                }
-                configSendDetailsRequestDescriptor = RequestDescriptor(url, configHeaders)
-            }
-
-            val paymentMethodsJsonStr = options.getString("paymentMethodsJsonStr") as String
-            val clientKey = options.getString("clientKey") as String
-            val environment = options.getString("environment") as String
-            val amount = options.getMap("amount") as ReadableMap
-
-            var configLocale: Locale? = null
-            if (options.hasKey("locale")) {
-                val locale = options.getString("locale") as String
-                configLocale = Locale.forLanguageTag(locale)
-            }
-
-            val paymentMethodsJson = JSONObject(paymentMethodsJsonStr)
-            val paymentMethodsApiResponse = PaymentMethodsApiResponse.SERIALIZER.deserialize(paymentMethodsJson)
-
-            val dropInConfigurationBuilder = DropInConfiguration.Builder(reactContext, DropInServiceImpl::class.java, clientKey)
-
-            val amountCurrency = amount.getString("currency") as String
-            val amountValue = amount.getInt("value")
-            val configAmount = Amount().apply {
-                this.currency = amountCurrency
-                this.value = amountValue
-            }
-            dropInConfigurationBuilder.setAmount(configAmount)
-
-            if (configLocale != null) {
-                dropInConfigurationBuilder.setShopperLocale(configLocale)
-            }
-
-            val configEnvironment: Environment
-            when (environment) {
-                "test" -> {
-                    configEnvironment = Environment.TEST
-                }
-                "europe" -> {
-                    configEnvironment = Environment.EUROPE
-                }
-                "united_states" -> {
-                    configEnvironment = Environment.UNITED_STATES
-                }
-                "australia" -> {
-                    configEnvironment = Environment.AUSTRALIA
-                }
-                else -> {
-                    promise.reject(IllegalArgumentException("environment malformed"))
-                    return
-                }
-            }
-
-            dropInConfigurationBuilder.setEnvironment(configEnvironment)
-
-            if (options.hasKey("cardOptions")) {
-                val cardOptions = options.getMap("cardOptions") as ReadableMap
-                var shopperReference: String? = null
-                if (cardOptions.hasKey("shopperReference")) {
-                    shopperReference = cardOptions.getString("shopperReference") as String
+        try {
+            val activity = currentActivity
+            if (activity != null) {
+                var configSendPaymentsRequestDescriptor: RequestDescriptor
+                (options.getMap("sendPaymentsRequestDescriptor") as ReadableMap).run {
+                    val url = this.getString("url") as String
+                    val headers = this.getMap("headers") as ReadableMap
+                    val configHeaders = mutableMapOf<String, String>()
+                    for ((headerKey, headerValue) in headers.entryIterator) {
+                        configHeaders[headerKey] = headerValue as String
+                    }
+                    configSendPaymentsRequestDescriptor = RequestDescriptor(url, configHeaders)
                 }
 
-                val cardConfigurationBuilder = CardConfiguration.Builder(reactContext, clientKey)
+                var configSendDetailsRequestDescriptor: RequestDescriptor
+                (options.getMap("sendDetailsRequestDescriptor") as ReadableMap).run {
+                    val url = this.getString("url") as String
+                    val headers = this.getMap("headers") as ReadableMap
+                    val configHeaders = mutableMapOf<String, String>()
+                    for ((headerKey, headerValue) in headers.entryIterator) {
+                        configHeaders[headerKey] = headerValue as String
+                    }
+                    configSendDetailsRequestDescriptor = RequestDescriptor(url, configHeaders)
+                }
+
+                val paymentMethodsJsonStr = options.getString("paymentMethodsJsonStr") as String
+                val clientKey = options.getString("clientKey") as String
+                val environment = options.getString("environment") as String
+                val amount = options.getMap("amount") as ReadableMap
+
+                var configLocale: Locale? = null
+                if (options.hasKey("locale")) {
+                    val locale = options.getString("locale") as String
+                    configLocale = Locale.forLanguageTag(locale)
+                }
+
+                val paymentMethodsJson = JSONObject(paymentMethodsJsonStr)
+                val paymentMethodsApiResponse =
+                    PaymentMethodsApiResponse.SERIALIZER.deserialize(paymentMethodsJson)
+
+                val dropInConfigurationBuilder = DropInConfiguration.Builder(
+                    reactContext,
+                    DropInServiceImpl::class.java,
+                    clientKey
+                )
+
+                val amountCurrency = amount.getString("currency") as String
+                val amountValue = amount.getInt("value")
+                val configAmount = Amount().apply {
+                    this.currency = amountCurrency
+                    this.value = amountValue
+                }
+                dropInConfigurationBuilder.setAmount(configAmount)
 
                 if (configLocale != null) {
-                    cardConfigurationBuilder.setShopperLocale(configLocale)
+                    dropInConfigurationBuilder.setShopperLocale(configLocale)
                 }
 
-                if (shopperReference != null) {
-                    cardConfigurationBuilder.setShopperReference(shopperReference)
+                val configEnvironment: Environment
+                when (environment) {
+                    "test" -> {
+                        configEnvironment = Environment.TEST
+                    }
+                    "europe" -> {
+                        configEnvironment = Environment.EUROPE
+                    }
+                    "united_states" -> {
+                        configEnvironment = Environment.UNITED_STATES
+                    }
+                    "australia" -> {
+                        configEnvironment = Environment.AUSTRALIA
+                    }
+                    else -> {
+                        promise.reject(IllegalArgumentException("environment malformed"))
+                        return
+                    }
                 }
 
-                dropInConfigurationBuilder.addCardConfiguration(cardConfigurationBuilder.build())
+                dropInConfigurationBuilder.setEnvironment(configEnvironment)
+
+                if (options.hasKey("cardOptions")) {
+                    val cardOptions = options.getMap("cardOptions") as ReadableMap
+                    var shopperReference: String? = null
+                    if (cardOptions.hasKey("shopperReference")) {
+                        shopperReference = cardOptions.getString("shopperReference") as String
+                    }
+
+                    val cardConfigurationBuilder =
+                        CardConfiguration.Builder(reactContext, clientKey)
+
+                    if (configLocale != null) {
+                        cardConfigurationBuilder.setShopperLocale(configLocale)
+                    }
+
+                    if (shopperReference != null) {
+                        cardConfigurationBuilder.setShopperReference(shopperReference)
+                    }
+
+                    dropInConfigurationBuilder.addCardConfiguration(cardConfigurationBuilder.build())
+                }
+
+                if (options.hasKey("googlePayOptions")) {
+                    val googlePayConfigurationBuilder =
+                        GooglePayConfiguration.Builder(reactContext, clientKey)
+                            .setAmount(configAmount)
+
+                    if (configLocale != null) {
+                        googlePayConfigurationBuilder.setShopperLocale(configLocale)
+                    }
+
+                    dropInConfigurationBuilder.addGooglePayConfiguration(
+                        googlePayConfigurationBuilder.build()
+                    )
+                }
+
+                Context.setup(
+                    promise,
+                    configSendPaymentsRequestDescriptor,
+                    configSendDetailsRequestDescriptor,
+                    configAmount
+                )
+
+                DropIn.startPayment(
+                    activity,
+                    paymentMethodsApiResponse,
+                    dropInConfigurationBuilder.build()
+                )
             }
-
-            if (options.hasKey("googlePayOptions")) {
-                val googlePayConfigurationBuilder = GooglePayConfiguration.Builder(reactContext, clientKey).setAmount(configAmount)
-
-                if (configLocale != null) {
-                    googlePayConfigurationBuilder.setShopperLocale(configLocale)
-                }
-
-                dropInConfigurationBuilder.addGooglePayConfiguration(googlePayConfigurationBuilder.build())
-            }
-
-            Context.setup(promise, configSendPaymentsRequestDescriptor, configSendDetailsRequestDescriptor, configAmount)
-
-            DropIn.startPayment(activity, paymentMethodsApiResponse, dropInConfigurationBuilder.build())
+        } catch (e: Throwable) {
+            promise.reject(e)
         }
     }
 
@@ -171,12 +194,17 @@ class RNAdyenModule(private var reactContext: ReactApplicationContext) : ReactCo
                     Context.promise?.resolve(resolveArray)
                 }
                 is DropInResult.Error -> {
-                    Context.promise?.reject("DropInResultError", dropInResult.reason)
+                    val resolveArray = Arguments.createArray()
+                    resolveArray.pushString("Error")
+                    resolveArray.pushString(dropInResult.reason)
+                    Context.promise?.resolve(resolveArray)
                 }
                 is DropInResult.CancelledByUser -> {
                     Context.promise?.reject("DropInResultCancelledByUser", "Cancelled by User")
                 }
             }
+        } catch (e: Throwable) {
+            Context.promise?.reject(e)
         } finally {
             Context.reset()
         }
