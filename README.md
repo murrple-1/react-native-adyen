@@ -14,7 +14,7 @@ This library attempts to provide a simple API for React Native that presents the
 
 Android min Version: 28 `// TODO comfirm`
 
-iOS min Version: 10.0 `// TODO comfirm`
+iOS min Version: 12.0
 
 ### Installing
 
@@ -23,13 +23,13 @@ Add this project as a dependency to your React Native project
 With Yarn
 
 ```bash
-yarn add --dev @murrple_1/react-native-adyen
+yarn add @murrple_1/react-native-adyen
 ```
 
 With NPM
 
 ```bash
-npm install --save-dev @murrple_1/react-native-adyen
+npm install --save @murrple_1/react-native-adyen
 ```
 
 #### iOS
