@@ -3,6 +3,7 @@ package com.reactnativeadyen
 import android.app.Activity
 import android.content.Intent
 import com.adyen.checkout.card.CardConfiguration
+import com.adyen.checkout.card.data.CardType
 import com.adyen.checkout.components.model.PaymentMethodsApiResponse
 import com.adyen.checkout.components.model.payments.Amount
 import com.adyen.checkout.core.api.Environment
@@ -128,10 +129,6 @@ class RNAdyenModule(private var reactContext: ReactApplicationContext) : ReactCo
 
                 if (options.hasKey("cardOptions")) {
                     val cardOptions = options.getMap("cardOptions") as ReadableMap
-                    var shopperReference: String? = null
-                    if (cardOptions.hasKey("shopperReference")) {
-                        shopperReference = cardOptions.getString("shopperReference") as String
-                    }
 
                     val cardConfigurationBuilder =
                         CardConfiguration.Builder(reactContext, clientKey)
@@ -140,9 +137,129 @@ class RNAdyenModule(private var reactContext: ReactApplicationContext) : ReactCo
                         cardConfigurationBuilder.setShopperLocale(configLocale)
                     }
 
-                    if (shopperReference != null) {
-                        cardConfigurationBuilder.setShopperReference(shopperReference)
+                    if (cardOptions.hasKey("shopperReference")) {
+                        cardConfigurationBuilder.setShopperReference(cardOptions.getString("shopperReference") as String)
                     }
+
+                    if (cardOptions.hasKey("allowedCardTypes")) {
+                        val allowedCardTypes = cardOptions.getArray("allowedCardTypes") as ReadableArray
+                        val configAllowedCardTypes = mutableSetOf<CardType>()
+                        for (i in 0..allowedCardTypes.size()) {
+                            when (allowedCardTypes.getString(i)) {
+                                "alphaBankBonusMasterCard" -> {
+                                    configAllowedCardTypes.add(CardType.MCALPHABANKBONUS)
+                                }
+                                "alphaBankBonusVISA" -> {
+                                    configAllowedCardTypes.add(CardType.VISAALPHABANKBONUS)
+                                }
+                                "argencard" -> {
+                                    configAllowedCardTypes.add(CardType.ARGENCARD)
+                                }
+                                "americanExpress" -> {
+                                    configAllowedCardTypes.add(CardType.AMERICAN_EXPRESS)
+                                }
+                                "bcmc" -> {
+                                    configAllowedCardTypes.add(CardType.BCMC)
+                                }
+                                "bijenkorfCard" -> {
+                                    configAllowedCardTypes.add(CardType.BIJENKORF_CARD)
+                                }
+                                "cabal" -> {
+                                    configAllowedCardTypes.add(CardType.CABAL)
+                                }
+                                "carteBancaire" -> {
+                                    configAllowedCardTypes.add(CardType.CARTEBANCAIRE)
+                                }
+                                "codensa" -> {
+                                    configAllowedCardTypes.add(CardType.CODENSA)
+                                }
+                                "dankort" -> {
+                                    configAllowedCardTypes.add(CardType.DANKORT)
+                                }
+                                "dankortVISA" -> {
+                                    configAllowedCardTypes.add(CardType.VISADANKORT)
+                                }
+                                "diners" -> {
+                                    configAllowedCardTypes.add(CardType.DINERS)
+                                }
+                                "discover" -> {
+                                    configAllowedCardTypes.add(CardType.DISCOVER)
+                                }
+                                "elo" -> {
+                                    configAllowedCardTypes.add(CardType.ELO)
+                                }
+                                "forbrugsforeningen" -> {
+                                    configAllowedCardTypes.add(CardType.FORBRUGSFORENINGEN)
+                                }
+                                "hiper" -> {
+                                    configAllowedCardTypes.add(CardType.HIPER)
+                                }
+                                "hipercard" -> {
+                                    configAllowedCardTypes.add(CardType.HIPERCARD)
+                                }
+                                "jcb" -> {
+                                    configAllowedCardTypes.add(CardType.JCB)
+                                }
+                                "karenMillen" -> {
+                                    configAllowedCardTypes.add(CardType.KARENMILLER)
+                                }
+                                "laser" -> {
+                                    configAllowedCardTypes.add(CardType.LASER)
+                                }
+                                "maestro" -> {
+                                    configAllowedCardTypes.add(CardType.MAESTRO)
+                                }
+                                "maestroUK" -> {
+                                    configAllowedCardTypes.add(CardType.MAESTRO_UK)
+                                }
+                                "masterCard" -> {
+                                    configAllowedCardTypes.add(CardType.MASTERCARD)
+                                }
+                                "mir" -> {
+                                    configAllowedCardTypes.add(CardType.MIR)
+                                }
+                                "naranja" -> {
+                                    configAllowedCardTypes.add(CardType.NARANJA)
+                                }
+                                "oasis" -> {
+                                    configAllowedCardTypes.add(CardType.OASIS)
+                                }
+                                "shopping" -> {
+                                    configAllowedCardTypes.add(CardType.SHOPPING)
+                                }
+                                "solo" -> {
+                                    configAllowedCardTypes.add(CardType.SOLO)
+                                }
+                                "troy" -> {
+                                    configAllowedCardTypes.add(CardType.TROY)
+                                }
+                                "uatp" -> {
+                                    configAllowedCardTypes.add(CardType.UATP)
+                                }
+                                "visa" -> {
+                                    configAllowedCardTypes.add(CardType.VISA)
+                                }
+                                "warehouse" -> {
+                                    configAllowedCardTypes.add(CardType.WAREHOUSE)
+                                }
+                                "accel", "cencosud", "chequeDejeneur", "chinaUnionPay", "creditUnion24", "kcp", "netplus", "nyce", "pulse", "star" -> {
+                                    // do nothing
+                                }
+                                else -> {
+                                    promise.reject(IllegalArgumentException("'allowedCardTypes' entry malformed"))
+                                    return
+                                }
+                            }
+                        }
+
+                        cardConfigurationBuilder.setSupportedCardTypes(*configAllowedCardTypes.toTypedArray())
+                    }
+
+                    if (cardOptions.hasKey("showsCvc")) {
+                        cardConfigurationBuilder.setHideCvc(!cardOptions.getBoolean("showsCvc"))
+                    }
+
+                    // TODO more options
 
                     dropInConfigurationBuilder.addCardConfiguration(cardConfigurationBuilder.build())
                 }
@@ -155,6 +272,8 @@ class RNAdyenModule(private var reactContext: ReactApplicationContext) : ReactCo
                     if (configLocale != null) {
                         googlePayConfigurationBuilder.setShopperLocale(configLocale)
                     }
+
+                    // TODO more options
 
                     dropInConfigurationBuilder.addGooglePayConfiguration(
                         googlePayConfigurationBuilder.build()

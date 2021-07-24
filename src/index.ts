@@ -360,6 +360,10 @@ export async function _getPaymentMethods({
 
 /**
  * Card types supported by Adyen, eg. Mastercard, Visa, Diner's Club, etc.
+ *
+ * Ignored by Android: `accel`, `cencosud`, `chequeDejeneur`, `chinaUnionPay`, `creditUnion24`, `kcp`, `netplus`, `nyce`, `pulse`, `star`
+ *
+ * Ignored by iOS: `cup`
  */
 export type CardType =
   | 'accel' // Accel
@@ -376,6 +380,7 @@ export type CardType =
   | 'chinaUnionPay' // China UnionPay
   | 'codensa' // Codensa
   | 'creditUnion24' // Credit Union 24
+  | 'cup' // CUP
   | 'dankort' // Dankort
   | 'dankortVISA' // Dankort VISA
   | 'diners' // Diners Club
@@ -473,6 +478,10 @@ export interface StartPaymentOptions {
      * Used by iOS.
      */
     showsStorePaymentMethodField?: boolean;
+    /**
+     * Used by Android.
+     */
+    showsCvc?: boolean;
   };
   /**
    * Options to customize the Google Pay component. Used by Android.

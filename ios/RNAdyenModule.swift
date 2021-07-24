@@ -228,6 +228,9 @@ class RNAdyenModule: NSObject {
                                     configAllowedCardTypes.append(CardType.visa)
                                 case "warehouse":
                                     configAllowedCardTypes.append(CardType.warehouse)
+                                case "cup":
+                                    // do nothing
+                                    break
                                 default:
                                     reject("Options Error", "'allowedCardTypes' element malformed", nil)
                                     return
