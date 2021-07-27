@@ -1,7 +1,7 @@
 {
   "name": "@murrple_1/react-native-adyen",
   "podName": "react-native-adyen",
-  "version": "0.1.3",
+  "version": "0.2.0",
   "description": "React Native Adyen Module",
   "homepage": "https://github.com/murrple-1/react-native-adyen#readme",
   "main": "lib/index.js",
@@ -13,25 +13,6 @@
     "react-native",
     "adyen",
     "drop-in"
-  ],
-  "files": [
-    "README.md",
-    "android",
-    "ios",
-    "lib",
-    "react-native-adyen.podspec",
-    "!.DS_Store",
-    "!.gradle",
-    "!.idea",
-    "!build",
-    "!gradle",
-    "!*.iml",
-    "!gradlew",
-    "!gradlew.bat",
-    "!local.properties",
-    "!project.xcworkspace",
-    "!xcshareddata",
-    "!xcuserdata"
   ],
   "scripts": {
     "compile": "rm -rf lib && tsc -p .",

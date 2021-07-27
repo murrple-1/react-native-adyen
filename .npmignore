@@ -1,0 +1,14 @@
+.DS_Store
+android/build/**/*
+project.xcworkspace
+xcshareddata/**/*
+.editorconfig
+.eslintignore
+.husky/**/*
+.eslintrc.json
+.prettierrc.js
+example
+example-server
+*.code-workspace
+.swiftlint.yml
+babel.config.js
