@@ -17,3 +17,5 @@
 -keepclassmembers public class * implements com.adyen.checkout.components.ActionComponent {
    public <init>(...);
 }
+-keep class com.facebook.hermes.unicode.** { *; }
+-keep class com.facebook.jni.** { *; }
