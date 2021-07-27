@@ -550,10 +550,8 @@ extension RNAdyenModule: DropInComponentDelegate {
                 DispatchQueue.main.async {
                     context.resolve(["Error", refusalReason])
 
-                    if let presentingViewController = component.viewController.presentingViewController {
-                        presentingViewController.dismiss(animated: true) {
-                            RNAdyenModule.context = nil
-                        }
+                    self.dismissDropInComponent(dropInComponent: component, animated: true) {
+                        RNAdyenModule.context = nil
                     }
                 }
             } else {
@@ -564,10 +562,8 @@ extension RNAdyenModule: DropInComponentDelegate {
                         context.resolve([response.resultCode])
                     }
 
-                    if let presentingViewController = component.viewController.presentingViewController {
-                        presentingViewController.dismiss(animated: true) {
-                            RNAdyenModule.context = nil
-                        }
+                    self.dismissDropInComponent(dropInComponent: component, animated: true) {
+                        RNAdyenModule.context = nil
                     }
                 }
             }
@@ -583,18 +579,14 @@ extension RNAdyenModule: DropInComponentDelegate {
             reject(code, message, error)
         }
 
-        if let presentingViewController = component.viewController.presentingViewController {
-            presentingViewController.dismiss(animated: true) {
-                RNAdyenModule.context = nil
-            }
+        self.dismissDropInComponent(dropInComponent: component, animated: true) {
+            RNAdyenModule.context = nil
         }
     }
 
     func didComplete(from component: DropInComponent) {
-        if let presentingViewController = component.viewController.presentingViewController {
-            presentingViewController.dismiss(animated: true) {
-                RNAdyenModule.context = nil
-            }
+        self.dismissDropInComponent(dropInComponent: component, animated: true) {
+            RNAdyenModule.context = nil
         }
     }
 
@@ -603,10 +595,8 @@ extension RNAdyenModule: DropInComponentDelegate {
             context.reject("Unknown Error", error.localizedDescription, error)
         }
 
-        if let presentingViewController = component.viewController.presentingViewController {
-            presentingViewController.dismiss(animated: true) {
-                RNAdyenModule.context = nil
-            }
+        self.dismissDropInComponent(dropInComponent: component, animated: true) {
+            RNAdyenModule.context = nil
         }
     }
 
@@ -616,5 +606,17 @@ extension RNAdyenModule: DropInComponentDelegate {
 
     func didOpenExternalApplication(_ component: DropInComponent) {
         // do nothing
+    }
+
+    private func dismissDropInComponent(dropInComponent: DropInComponent, animated: Bool, completion: (() -> Void)? = nil) {
+        let viewController = dropInComponent.viewController
+
+        if let presentedViewController = viewController.presentedViewController {
+            presentedViewController.dismiss(animated: animated) {
+                viewController.dismiss(animated: animated, completion: completion)
+            }
+        } else {
+            viewController.dismiss(animated: animated, completion: completion)
+        }
     }
 }
