@@ -10,10 +10,13 @@ import {
   Platform,
 } from 'react-native';
 
+import { v4 as uuid4 } from 'uuid';
+
 import {
   _getPaymentMethods,
   startPayment,
   ResultCode,
+  Amount,
 } from '@murrple_1/react-native-adyen';
 
 import { environment } from './environment';
@@ -45,16 +48,18 @@ const App = () => {
       android: 'http://10.0.2.2:8000',
     });
 
+    const amount: Amount = {
+      currency: 'CAD',
+      value: 500,
+    };
+
     _getPaymentMethods({
       requestDescriptor: {
         url: `${hostname}/paymentMethods`,
         headers: {},
       },
-      countryCode: 'US',
-      amount: {
-        currency: 'USD',
-        value: 100,
-      },
+      countryCode: 'CA',
+      amount,
       shopperReference: environment.shopperReference,
     })
       .then(
@@ -70,13 +75,15 @@ const App = () => {
                 url: `${hostname}/payments/details`,
                 headers: {},
               },
+              reference: uuid4(),
+              returnUrl: {
+                ios: 'adyen-example://',
+                android: null,
+              },
               clientKey: environment.clientKey,
               environment: 'test',
-              countryCode: 'US',
-              amount: {
-                currency: 'USD',
-                value: 100,
-              },
+              countryCode: 'CA',
+              amount,
               locale: 'en',
               cardOptions: {
                 shopperReference: environment.shopperReference,
@@ -86,12 +93,12 @@ const App = () => {
                 summaryItems: [
                   {
                     label: 'Gumball x2',
-                    amount: 0.5,
+                    amount: 2.25,
                     type: 'final',
                   },
                   {
                     label: 'Mars Bar x1',
-                    amount: 0.5,
+                    amount: 2.75,
                     type: 'final',
                   },
                 ],
@@ -139,7 +146,7 @@ const App = () => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.separator} />
-      <Text style={styles.text}>Make Payment of $1.00 USD</Text>
+      <Text style={styles.text}>Make Payment of $5.00 CAD</Text>
       <Button
         title="Initiate Payment"
         disabled={isLoading}

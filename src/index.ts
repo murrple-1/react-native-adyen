@@ -431,6 +431,25 @@ export interface StartPaymentOptions {
    */
   sendDetailsRequestDescriptor: RequestDescriptor;
   /**
+   * Reference to be used to connect your server's order with the Adyen order.
+   */
+  reference: string;
+  /**
+   * If a payment method requires you to go to a web browser, this is the 'URL' to return to.
+   *
+   * Note: for our purposes, they are not web page URLs, but custom app URL schemes.
+   */
+  returnUrl: {
+    /**
+     * iOS custom app URI scheme is required. For more information on setting a custom URL scheme for your app, read the [Apple Developer documentation](https://developer.apple.com/documentation/uikit/inter-process_communication/allowing_apps_and_websites_to_link_to_your_content/defining_a_custom_url_scheme_for_your_app).
+     */
+    ios: string;
+    /**
+     * Android custom app URI scheme is not required. You can either set it yourself, or it defaults to the result of [`RedirectComponent.getReturnUrl(context)`](https://github.com/Adyen/adyen-android/blob/develop/redirect/src/main/java/com/adyen/checkout/redirect/RedirectComponent.java).
+     */
+    android: string | null;
+  };
+  /**
    * Adyen-provided Client Key.
    */
   clientKey: string;

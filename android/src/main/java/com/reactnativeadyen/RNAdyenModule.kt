@@ -11,6 +11,7 @@ import com.adyen.checkout.dropin.DropIn
 import com.adyen.checkout.dropin.DropInConfiguration
 import com.adyen.checkout.dropin.DropInResult
 import com.adyen.checkout.googlepay.GooglePayConfiguration
+import com.adyen.checkout.redirect.RedirectComponent
 import com.facebook.react.bridge.*
 import java.util.Locale
 import org.json.JSONObject
@@ -29,12 +30,16 @@ class RNAdyenModule(private var reactContext: ReactApplicationContext) : ReactCo
         var sendPaymentsRequestDescriptor: RequestDescriptor? = null
         var sendDetailsRequestDescriptor: RequestDescriptor? = null
         var amount: Amount? = null
+        var reference: String? = null
+        var returnUrl: String? = null
 
-        fun setup(promise: Promise, sendPaymentsRequestDescriptor: RequestDescriptor, sendDetailsRequestDescriptor: RequestDescriptor, amount: Amount) {
+        fun setup(promise: Promise, sendPaymentsRequestDescriptor: RequestDescriptor, sendDetailsRequestDescriptor: RequestDescriptor, amount: Amount, reference: String, returnUrl: String) {
             this.promise = promise
             this.sendPaymentsRequestDescriptor = sendPaymentsRequestDescriptor
             this.sendDetailsRequestDescriptor = sendDetailsRequestDescriptor
             this.amount = amount
+            this.reference = reference
+            this.returnUrl = returnUrl
         }
 
         fun reset() {
@@ -42,6 +47,8 @@ class RNAdyenModule(private var reactContext: ReactApplicationContext) : ReactCo
             sendPaymentsRequestDescriptor = null
             sendDetailsRequestDescriptor = null
             amount = null
+            reference = null
+            returnUrl = null
         }
     }
 
@@ -76,6 +83,10 @@ class RNAdyenModule(private var reactContext: ReactApplicationContext) : ReactCo
                 val clientKey = options.getString("clientKey") as String
                 val environment = options.getString("environment") as String
                 val amount = options.getMap("amount") as ReadableMap
+                val reference = options.getString("reference") as String
+
+                val returnUrlMap = options.getMap("returnUrl") as ReadableMap
+                val returnUrl = returnUrlMap.getString("android")
 
                 var configLocale: Locale? = null
                 if (options.hasKey("locale")) {
@@ -284,7 +295,9 @@ class RNAdyenModule(private var reactContext: ReactApplicationContext) : ReactCo
                     promise,
                     configSendPaymentsRequestDescriptor,
                     configSendDetailsRequestDescriptor,
-                    configAmount
+                    configAmount,
+                    reference,
+                    returnUrl ?: RedirectComponent.getReturnUrl(reactContext)
                 )
 
                 DropIn.startPayment(

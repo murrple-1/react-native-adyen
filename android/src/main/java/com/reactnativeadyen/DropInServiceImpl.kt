@@ -51,8 +51,9 @@ class DropInServiceImpl : DropInService() {
                             put("value", amount.value)
                         }
                 )
-
                 put("paymentMethod", paymentComponentJson.getJSONObject("paymentMethod"))
+                put("reference", RNAdyenModule.Context.reference as String)
+                put("returnUrl", RNAdyenModule.Context.returnUrl as String)
             }
 
             val future: RequestFuture<JSONObject> = RequestFuture.newFuture()
