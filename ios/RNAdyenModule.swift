@@ -550,16 +550,24 @@ extension RNAdyenModule: DropInComponentDelegate {
                 DispatchQueue.main.async {
                     context.resolve(["Error", refusalReason])
 
-                    component.viewController.dismiss(animated: true) {
-                        RNAdyenModule.context = nil
+                    if let presentingViewController = component.viewController.presentingViewController {
+                        presentingViewController.dismiss(animated: true) {
+                            RNAdyenModule.context = nil
+                        }
                     }
                 }
             } else {
                 DispatchQueue.main.async {
-                    context.resolve([response.resultCode])
+                    if response.resultCode == "Error" {
+                        context.resolve(["Error", ""])
+                    } else {
+                        context.resolve([response.resultCode])
+                    }
 
-                    component.viewController.dismiss(animated: true) {
-                        RNAdyenModule.context = nil
+                    if let presentingViewController = component.viewController.presentingViewController {
+                        presentingViewController.dismiss(animated: true) {
+                            RNAdyenModule.context = nil
+                        }
                     }
                 }
             }
@@ -575,14 +583,18 @@ extension RNAdyenModule: DropInComponentDelegate {
             reject(code, message, error)
         }
 
-        component.viewController.dismiss(animated: true) {
-            RNAdyenModule.context = nil
+        if let presentingViewController = component.viewController.presentingViewController {
+            presentingViewController.dismiss(animated: true) {
+                RNAdyenModule.context = nil
+            }
         }
     }
 
     func didComplete(from component: DropInComponent) {
-        component.viewController.dismiss(animated: true) {
-            RNAdyenModule.context = nil
+        if let presentingViewController = component.viewController.presentingViewController {
+            presentingViewController.dismiss(animated: true) {
+                RNAdyenModule.context = nil
+            }
         }
     }
 
@@ -591,18 +603,18 @@ extension RNAdyenModule: DropInComponentDelegate {
             context.reject("Unknown Error", error.localizedDescription, error)
         }
 
-        component.viewController.dismiss(animated: true) {
-            RNAdyenModule.context = nil
+        if let presentingViewController = component.viewController.presentingViewController {
+            presentingViewController.dismiss(animated: true) {
+                RNAdyenModule.context = nil
+            }
         }
     }
 
     func didCancel(component: PaymentComponent, from dropInComponent: DropInComponent) {
         // do nothing
-        print("didCancel")
     }
 
     func didOpenExternalApplication(_ component: DropInComponent) {
         // do nothing
-        print("didOpenExternalApplication")
     }
 }
