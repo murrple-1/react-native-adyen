@@ -21,36 +21,15 @@ class RNAdyenModule(private var reactContext: ReactApplicationContext) : ReactCo
         reactContext.addActivityEventListener(this)
     }
 
-    override fun getName() = "RNAdyenModule"
-
     data class RequestDescriptor(val url: String, val headers: Map<String, String>)
 
-    object Context {
-        var promise: Promise? = null
-        var sendPaymentsRequestDescriptor: RequestDescriptor? = null
-        var sendDetailsRequestDescriptor: RequestDescriptor? = null
-        var amount: Amount? = null
-        var reference: String? = null
-        var returnUrl: String? = null
+    data class Context(val promise: Promise, val sendPaymentsRequestDescriptor: RequestDescriptor, val sendDetailsRequestDescriptor: RequestDescriptor, val amount: Amount, val reference: String, val returnUrl: String)
 
-        fun setup(promise: Promise, sendPaymentsRequestDescriptor: RequestDescriptor, sendDetailsRequestDescriptor: RequestDescriptor, amount: Amount, reference: String, returnUrl: String) {
-            this.promise = promise
-            this.sendPaymentsRequestDescriptor = sendPaymentsRequestDescriptor
-            this.sendDetailsRequestDescriptor = sendDetailsRequestDescriptor
-            this.amount = amount
-            this.reference = reference
-            this.returnUrl = returnUrl
-        }
-
-        fun reset() {
-            promise = null
-            sendPaymentsRequestDescriptor = null
-            sendDetailsRequestDescriptor = null
-            amount = null
-            reference = null
-            returnUrl = null
-        }
+    companion object {
+        var context: Context? = null
     }
+
+    override fun getName() = "RNAdyenModule"
 
     @ReactMethod
     fun startPayment(options: ReadableMap, promise: Promise) {
@@ -291,14 +270,7 @@ class RNAdyenModule(private var reactContext: ReactApplicationContext) : ReactCo
                     )
                 }
 
-                Context.setup(
-                    promise,
-                    configSendPaymentsRequestDescriptor,
-                    configSendDetailsRequestDescriptor,
-                    configAmount,
-                    reference,
-                    returnUrl ?: RedirectComponent.getReturnUrl(reactContext)
-                )
+                context = Context(promise, configSendPaymentsRequestDescriptor, configSendDetailsRequestDescriptor, configAmount, reference, returnUrl ?: RedirectComponent.getReturnUrl(reactContext))
 
                 DropIn.startPayment(
                     activity,
@@ -322,23 +294,28 @@ class RNAdyenModule(private var reactContext: ReactApplicationContext) : ReactCo
             when (dropInResult) {
                 is DropInResult.Finished -> {
                     val resolveArray = Arguments.createArray()
-                    resolveArray.pushString(dropInResult.result)
-                    Context.promise?.resolve(resolveArray)
+                    if (dropInResult.result == "Error") {
+                        resolveArray.pushString("Error")
+                        resolveArray.pushString("")
+                    } else {
+                        resolveArray.pushString(dropInResult.result)
+                    }
+                    context?.promise?.resolve(resolveArray)
                 }
                 is DropInResult.Error -> {
                     val resolveArray = Arguments.createArray()
                     resolveArray.pushString("Error")
                     resolveArray.pushString(dropInResult.reason)
-                    Context.promise?.resolve(resolveArray)
+                    context?.promise?.resolve(resolveArray)
                 }
                 is DropInResult.CancelledByUser -> {
-                    Context.promise?.reject("DropInResultCancelledByUser", "Cancelled by User")
+                    context?.promise?.reject("DropInResultCancelledByUser", "Cancelled by User")
                 }
             }
         } catch (e: Throwable) {
-            Context.promise?.reject(e)
+            context?.promise?.reject(e)
         } finally {
-            Context.reset()
+            context = null
         }
     }
 
