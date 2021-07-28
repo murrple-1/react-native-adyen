@@ -245,8 +245,8 @@ class RNAdyenModule(private var reactContext: ReactApplicationContext) : ReactCo
                         cardConfigurationBuilder.setSupportedCardTypes(*configAllowedCardTypes.toTypedArray())
                     }
 
-                    if (cardOptions.hasKey("showsCvc")) {
-                        cardConfigurationBuilder.setHideCvc(!cardOptions.getBoolean("showsCvc"))
+                    if (cardOptions.hasKey("showsSecurityCodeField")) {
+                        cardConfigurationBuilder.setHideCvc(!cardOptions.getBoolean("showsSecurityCodeField"))
                     }
 
                     // TODO more options
@@ -294,12 +294,7 @@ class RNAdyenModule(private var reactContext: ReactApplicationContext) : ReactCo
             when (dropInResult) {
                 is DropInResult.Finished -> {
                     val resolveArray = Arguments.createArray()
-                    if (dropInResult.result == "Error") {
-                        resolveArray.pushString("Error")
-                        resolveArray.pushString("")
-                    } else {
-                        resolveArray.pushString(dropInResult.result)
-                    }
+                    resolveArray.pushString(dropInResult.result)
                     context?.promise?.resolve(resolveArray)
                 }
                 is DropInResult.Error -> {

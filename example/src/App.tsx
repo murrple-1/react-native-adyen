@@ -15,7 +15,6 @@ import { v4 as uuid4 } from 'uuid';
 import {
   _getPaymentMethods,
   startPayment,
-  ResultCode,
   Amount,
 } from '@murrple_1/react-native-adyen';
 
@@ -105,26 +104,15 @@ const App = () => {
                 merchantIdentifier: "Gary's Corner Store",
               },
             });
+            const [resultCode, refusalReason] = checkoutResponse;
             let alertStr: string;
-            switch (checkoutResponse.resultCode) {
-              case ResultCode.Authorised: {
-                alertStr = 'Authorised';
+            switch (resultCode) {
+              case 'Error': {
+                alertStr = `Error: ${refusalReason}`;
                 break;
               }
-              case ResultCode.Error: {
-                alertStr = `Error: ${checkoutResponse.refusalReason}`;
-                break;
-              }
-              case ResultCode.Pending: {
-                alertStr = 'Pending';
-                break;
-              }
-              case ResultCode.Received: {
-                alertStr = 'Received';
-                break;
-              }
-              case ResultCode.Refused: {
-                alertStr = 'Refused';
+              default: {
+                alertStr = resultCode;
                 break;
               }
             }

@@ -478,7 +478,7 @@ export interface StartPaymentOptions {
      */
     shopperReference?: string;
     /**
-     * Used by iOS.
+     * Card types you are allowing to be used.
      */
     allowedCardTypes?: CardType[];
     /**
@@ -490,17 +490,13 @@ export interface StartPaymentOptions {
      */
     showsHolderNameField?: boolean;
     /**
-     * Used by iOS.
+     * TODO fill in
      */
     showsSecurityCodeField?: boolean;
     /**
      * Used by iOS.
      */
     showsStorePaymentMethodField?: boolean;
-    /**
-     * Used by Android.
-     */
-    showsCvc?: boolean;
   };
   /**
    * Options to customize the Google Pay component. Used by Android.
@@ -546,96 +542,13 @@ export interface StartPaymentOptions {
 }
 
 /**
- * Result codes returned by Adyen after a successful or unsuccessful payment.
- */
-export enum ResultCode {
-  /**
-   * Description: The payment was successful.
-   *
-   * Action to take: Inform the shopper that the payment was successful.
-   */
-  Authorised,
-  /**
-   * Description: Inform the shopper that there was an error processing their payment.
-   *
-   * Action to take: You'll receive a `refusalReason` in the same response, indicating the cause of the error.
-   */
-  Error,
-  /**
-   * Description: The shopper has completed the payment but the final result is not yet known.
-   *
-   * Action to take: Inform the shopper that you've received their order, and are waiting for the payment to be completed. You will receive the final result of the payment in an [AUTHORISATION notification](https://docs.adyen.com/development-resources/webhooks/understand-notifications).
-   */
-  Pending,
-  /**
-   * Description: The payment was refused.
-   *
-   * Action to take: Inform the shopper that the payment was refused. Ask the shopper to try the payment again using a different payment method or card.
-   */
-  Refused,
-  /**
-   * Description: For some payment methods, it can take some time before the final status of the payment is known.
-   *
-   * Action to take: Inform the shopper that you've received their order, and are waiting for the payment to clear. You will receive the final result of the payment in an [AUTHORISATION notification](https://docs.adyen.com/development-resources/webhooks/understand-notifications).
-   */
-  Received,
-}
-
-interface _Result {
-  resultCode:
-    | ResultCode.Authorised
-    | ResultCode.Pending
-    | ResultCode.Received
-    | ResultCode.Refused;
-}
-
-interface _ErrorResult {
-  resultCode: ResultCode.Error;
-  refusalReason: string;
-}
-
-/**
- * Object returned after the payment process has completed, describing its outcome.
- */
-export type Result = _Result | _ErrorResult;
-
-/**
  * This is the singular function you must call to display the Drop-In component atop your app.
+ *
+ * It returns a tuple of the `resultCode` (see https://docs.adyen.com/api-explorer/#/CheckoutService/v67/post/payments__resParam_resultCode) and `refusalReason`, if exists.
  */
-export async function startPayment(
-  options: StartPaymentOptions,
-): Promise<Result> {
-  const response = (await RNAdyenModule.startPayment(options)) as string[];
-  const resultCode = response[0];
-  switch (resultCode) {
-    case 'Authorised': {
-      return {
-        resultCode: ResultCode.Authorised,
-      };
-    }
-    case 'Error': {
-      return {
-        resultCode: ResultCode.Error,
-        refusalReason: response[1] as string,
-      };
-    }
-    case 'Pending': {
-      return {
-        resultCode: ResultCode.Pending,
-      };
-    }
-    case 'Refused': {
-      return {
-        resultCode: ResultCode.Refused,
-      };
-    }
-    case 'Received': {
-      return {
-        resultCode: ResultCode.Received,
-      };
-    }
-    default: {
-      throw new Error('unknown');
-    }
-  }
+export async function startPayment(options: StartPaymentOptions) {
+  const response = (await RNAdyenModule.startPayment(options)) as
+    | [string]
+    | [string, string];
+  return response;
 }

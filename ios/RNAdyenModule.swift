@@ -546,21 +546,14 @@ extension RNAdyenModule: DropInComponentDelegate {
                 DispatchQueue.main.async {
                     component.handle(action)
                 }
-            } else if let refusalReason = response.refusalReason {
-                DispatchQueue.main.async {
-                    context.resolve(["Error", refusalReason])
-
-                    self.dismissDropInComponent(dropInComponent: component, animated: true) {
-                        RNAdyenModule.context = nil
-                    }
-                }
             } else {
+                var resolveArray = [response.resultCode]
+                if let refusalReason = response.refusalReason {
+                    resolveArray.append(refusalReason)
+                }
+
                 DispatchQueue.main.async {
-                    if response.resultCode == "Error" {
-                        context.resolve(["Error", ""])
-                    } else {
-                        context.resolve([response.resultCode])
-                    }
+                    context.resolve(resolveArray)
 
                     self.dismissDropInComponent(dropInComponent: component, animated: true) {
                         RNAdyenModule.context = nil
