@@ -303,7 +303,7 @@ PODS:
     - React-jsi (= 0.64.2)
     - React-perflogger (= 0.64.2)
   - React-jsinspector (0.64.2)
-  - react-native-adyen (0.1.2):
+  - react-native-adyen (0.2.0):
     - Adyen
     - React
   - react-native-get-random-values (1.7.0):
@@ -542,7 +542,7 @@ SPEC CHECKSUMS:
   React-jsi: 67747b9722f6dab2ffe15b011bcf6b3f2c3f1427
   React-jsiexecutor: 80c46bd381fd06e418e0d4f53672dc1d1945c4c3
   React-jsinspector: cc614ec18a9ca96fd275100c16d74d62ee11f0ae
-  react-native-adyen: 52f694a59a3646527ea03b260bb0c706aad5334d
+  react-native-adyen: 594f966862bf62f939654f3c12f5b064c0736b04
   react-native-get-random-values: 237bffb1c7e05fb142092681531810a29ba53015
   React-perflogger: 25373e382fed75ce768a443822f07098a15ab737
   React-RCTActionSheet: af7796ba49ffe4ca92e7277a5d992d37203f7da5
