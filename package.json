@@ -38,9 +38,9 @@
     "eslint-plugin-react-hooks": "^4.2.0",
     "eslint-plugin-simple-import-sort": "^7.0.0",
     "husky": "^7.0.0",
+    "lint-staged": "^11.1.2",
     "metro-react-native-babel-preset": "^0.66.2",
     "prettier": "^2.3.2",
-    "pretty-quick": "^3.1.1",
     "react": "^17.0.2",
     "react-native": "^0.64.2",
     "typescript": "^4.3.5"

@@ -1,0 +1,7 @@
+{
+  ".(js|jsx|ts|tsx|html|scss|json)": "prettier --write",
+  ".(prettier|lintstaged)rc": "prettier --write",
+  "*.code-workspace": "prettier --write",
+  "*.kt": "ktlint --color --format --android",
+  "*.swift": "swiftlint lint --format --fix"
+}

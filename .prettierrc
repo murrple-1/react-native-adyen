@@ -1,0 +1,13 @@
+{
+  "singleQuote": true,
+  "trailingComma": "all",
+  "endOfLine": "lf",
+  "arrowParens": "avoid",
+  "quoteProps": "preserve",
+  "overrides": [
+    {
+      "files": [".lintstagedrc", ".prettierrc", "*.code-workspace"],
+      "options": { "parser": "json" }
+    }
+  ]
+}

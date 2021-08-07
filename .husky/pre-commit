@@ -1,20 +1,4 @@
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
 
-cd "$(dirname "$0")/../"
-yarn pretty-quick --staged
-
-if command -v ktlint; then
-    ktlint --color --format --android "android/**/*.kt" "example/android/**/*.kt"
-else
-    echo "Install ktlint (https://github.com/pinterest/ktlint) to lint Kotlin code"
-fi
-
-if command -v swiftlint; then
-    swiftlint lint --format --fix
-    cd example/
-    swiftlint lint --format --fix
-    cd ../
-else
-    echo "Install swiftlint (https://github.com/realm/SwiftLint) to lint Swift code"
-fi
+yarn lint-staged
