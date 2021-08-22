@@ -1,4 +1,9 @@
-import { NativeModules, Platform } from 'react-native';
+import {
+  EmitterSubscription,
+  NativeEventEmitter,
+  NativeModules,
+  Platform,
+} from 'react-native';
 
 const { RNAdyenModule } = NativeModules;
 
@@ -331,7 +336,7 @@ export interface _GetPaymentMethodsJsonStrOptions {
 }
 
 /**
- * This method is not strictly recommended for use in your app, but should give you a starting point on how to get the /paymentMethods JSON string, which is necessary for `startPayment()`.
+ * This method is not strictly recommended for use in your app, but should give you a starting point on how to get the `/paymentMethods` JSON string, which is necessary for `startPayment()`.
  */
 export async function _getPaymentMethods({
   requestDescriptor,
@@ -356,6 +361,30 @@ export async function _getPaymentMethods({
     method: 'POST',
   });
   return await response.text();
+}
+
+export interface _SendPaymentOptions {
+  requestDescriptor: RequestDescriptor;
+}
+
+/**
+ * This method is not strictly recommended for use in your app, but should give you a starting point on how to send the `/payment` payload, which is necessary for `startPayment()`.
+ */
+export async function _sendPayment({ requestDescriptor }: _SendPaymentOptions) {
+  // TODO
+}
+
+export interface _SendPaymentDetailsOptions {
+  requestDescriptor: RequestDescriptor;
+}
+
+/**
+ * This method is not strictly recommended for use in your app, but should give you a starting point on how to send the `/payment/details` payload, which is necessary for `startPayment()`.
+ */
+export async function _sendPaymentDetails({
+  requestDescriptor,
+}: _SendPaymentDetailsOptions) {
+  // TODO
 }
 
 /**
@@ -422,14 +451,6 @@ export interface StartPaymentOptions {
    * The complete, unabridged response from Adyen's `/paymentMethods` endpoint. This is to be treated as a blackbox, as Adyen internally decodes it into something useful.
    */
   paymentMethodsJsonStr: string;
-  /**
-   * Description of your server's endpoint which will receive partial data for sending along to Adyen's `/payment` endpoint.
-   */
-  sendPaymentsRequestDescriptor: RequestDescriptor;
-  /**
-   * Description of your server's endpoint which will receive a blob of data for sending along to Adyen's `/payment/details` endpoint.
-   */
-  sendDetailsRequestDescriptor: RequestDescriptor;
   /**
    * Reference to be used to connect your server's order with the Adyen order.
    */
@@ -542,13 +563,88 @@ export interface StartPaymentOptions {
 }
 
 /**
+ * TODO
+ */
+export type SendPaymentFn = (obj: unknown) => Promise<Record<string, unknown>>;
+
+/**
+ * TODO
+ */
+export type SendPaymentDetailsFn = (
+  obj: unknown,
+) => Promise<Record<string, unknown>>;
+
+let _paymentStarted = false;
+const _eventEmitter = new NativeEventEmitter(RNAdyenModule);
+
+/**
  * This is the singular function you must call to display the Drop-In component atop your app.
  *
  * It returns a tuple of the `resultCode` (see https://docs.adyen.com/api-explorer/#/CheckoutService/v67/post/payments__resParam_resultCode) and `refusalReason`, if exists.
  */
-export async function startPayment(options: StartPaymentOptions) {
-  const response = (await RNAdyenModule.startPayment(options)) as
-    | [string]
-    | [string, string];
-  return response;
+export async function startPayment(
+  options: StartPaymentOptions,
+  sendPaymentsFn: SendPaymentFn,
+  sendPaymentDetailsFn: SendPaymentDetailsFn,
+): Promise<[string] | [string, string]> {
+  if (_paymentStarted) {
+    throw new Error('payment already started');
+  }
+
+  _paymentStarted = true;
+
+  let paymentEventListener: EmitterSubscription | null = null;
+  let paymentDetailsEventListener: EmitterSubscription | null = null;
+
+  return new Promise<[string] | [string, string]>((resolve, reject) => {
+    paymentEventListener = _eventEmitter.addListener(
+      'PaymentEvent',
+      paymentObj => {
+        sendPaymentsFn(paymentObj).then(
+          response => {
+            RNAdyenModule.passPaymentResponse(response);
+          },
+          reason => {
+            RNAdyenModule.passError(reason);
+          },
+        );
+      },
+    );
+    paymentDetailsEventListener = _eventEmitter.addListener(
+      'PaymentDetailsEvent',
+      paymentDetailsObj => {
+        sendPaymentDetailsFn(paymentDetailsObj).then(
+          response => {
+            RNAdyenModule.passPaymentDetailsResponse(response);
+          },
+          reason => {
+            RNAdyenModule.passError(reason);
+          },
+        );
+      },
+    );
+
+    (
+      RNAdyenModule.startPayment(options) as Promise<
+        [string] | [string, string]
+      >
+    ).then(
+      response => {
+        resolve(response);
+      },
+      reason => {
+        reject(reason);
+      },
+    );
+  }).finally(() => {
+    if (paymentEventListener !== null) {
+      paymentEventListener.remove();
+    }
+
+    if (paymentDetailsEventListener !== null) {
+      paymentDetailsEventListener.remove();
+    }
+
+    _paymentStarted = false;
+  });
 }
