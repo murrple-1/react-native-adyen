@@ -13,6 +13,7 @@ import com.adyen.checkout.dropin.DropInResult
 import com.adyen.checkout.googlepay.GooglePayConfiguration
 import com.adyen.checkout.redirect.RedirectComponent
 import com.facebook.react.bridge.*
+import org.json.JSONArray
 import java.util.Locale
 import org.json.JSONObject
 
@@ -21,12 +22,109 @@ class RNAdyenModule(private var reactContext: ReactApplicationContext) : ReactCo
         reactContext.addActivityEventListener(this)
     }
 
-    data class RequestDescriptor(val url: String, val headers: Map<String, String>)
-
-    data class Context(val promise: Promise, val sendPaymentsRequestDescriptor: RequestDescriptor, val sendDetailsRequestDescriptor: RequestDescriptor, val amount: Amount, val reference: String, val returnUrl: String)
+    data class Context(val reactContext: ReactApplicationContext, val promise: Promise, val amount: Amount, val reference: String, val returnUrl: String)
 
     companion object {
         var context: Context? = null
+        var sendResultFn: ((response: JSONObject) -> Unit)? = null
+
+        fun convertJsonToMap(jsonObject: JSONObject): WritableMap {
+            val map = Arguments.createMap()
+            val iterator = jsonObject.keys()
+            while (iterator.hasNext()) {
+                val key = iterator.next()
+                when (val value = jsonObject[key]) {
+                    is JSONObject -> {
+                        map.putMap(key, convertJsonToMap(value))
+                    }
+                    is JSONArray -> {
+                        map.putArray(key, convertJsonToArray(value))
+                    }
+                    is Boolean -> {
+                        map.putBoolean(key, value)
+                    }
+                    is Int -> {
+                        map.putInt(key, value)
+                    }
+                    is Double -> {
+                        map.putDouble(key, value)
+                    }
+                    is String -> {
+                        map.putString(key, value)
+                    }
+                    else -> {
+                        map.putString(key, value.toString())
+                    }
+                }
+            }
+            return map
+        }
+
+        private fun convertJsonToArray(jsonArray: JSONArray): WritableArray {
+            val array = Arguments.createArray()
+            for (i in 0 until jsonArray.length()) {
+                when (val value = jsonArray[i]) {
+                    is JSONObject -> {
+                        array.pushMap(convertJsonToMap(value))
+                    }
+                    is JSONArray -> {
+                        array.pushArray(convertJsonToArray(value))
+                    }
+                    is Boolean -> {
+                        array.pushBoolean(value)
+                    }
+                    is Int -> {
+                        array.pushInt(value)
+                    }
+                    is Double -> {
+                        array.pushDouble(value)
+                    }
+                    is String -> {
+                        array.pushString(value)
+                    }
+                    else -> {
+                        array.pushString(value.toString())
+                    }
+                }
+            }
+            return array
+        }
+
+        fun convertMapToJson(readableMap: ReadableMap): JSONObject {
+            val obj = JSONObject()
+            val iterator = readableMap.keySetIterator()
+            while (iterator.hasNextKey()) {
+                val key = iterator.nextKey()
+                when (readableMap.getType(key)) {
+                    ReadableType.Null -> obj.put(key, JSONObject.NULL)
+                    ReadableType.Boolean -> obj.put(key, readableMap.getBoolean(key))
+                    ReadableType.Number -> obj.put(key, readableMap.getDouble(key))
+                    ReadableType.String -> obj.put(key, readableMap.getString(key))
+                    ReadableType.Map -> obj.put(key, convertMapToJson(readableMap.getMap(key) as ReadableMap))
+                    ReadableType.Array -> obj.put(
+                        key,
+                        convertArrayToJson(readableMap.getArray(key) as ReadableArray)
+                    )
+                }
+            }
+            return obj
+        }
+
+        private fun convertArrayToJson(readableArray: ReadableArray): JSONArray {
+            val array = JSONArray()
+            for (i in 0 until readableArray.size()) {
+                when (readableArray.getType(i)) {
+                    ReadableType.Null -> {
+                    }
+                    ReadableType.Boolean -> array.put(readableArray.getBoolean(i))
+                    ReadableType.Number -> array.put(readableArray.getDouble(i))
+                    ReadableType.String -> array.put(readableArray.getString(i))
+                    ReadableType.Map -> array.put(convertMapToJson(readableArray.getMap(i)))
+                    ReadableType.Array -> array.put(convertArrayToJson(readableArray.getArray(i)))
+                }
+            }
+            return array
+        }
     }
 
     override fun getName() = "RNAdyenModule"
@@ -36,28 +134,6 @@ class RNAdyenModule(private var reactContext: ReactApplicationContext) : ReactCo
         try {
             val activity = currentActivity
             if (activity != null) {
-                var configSendPaymentsRequestDescriptor: RequestDescriptor
-                (options.getMap("sendPaymentsRequestDescriptor") as ReadableMap).run {
-                    val url = this.getString("url") as String
-                    val headers = this.getMap("headers") as ReadableMap
-                    val configHeaders = mutableMapOf<String, String>()
-                    for ((headerKey, headerValue) in headers.entryIterator) {
-                        configHeaders[headerKey] = headerValue as String
-                    }
-                    configSendPaymentsRequestDescriptor = RequestDescriptor(url, configHeaders)
-                }
-
-                var configSendDetailsRequestDescriptor: RequestDescriptor
-                (options.getMap("sendDetailsRequestDescriptor") as ReadableMap).run {
-                    val url = this.getString("url") as String
-                    val headers = this.getMap("headers") as ReadableMap
-                    val configHeaders = mutableMapOf<String, String>()
-                    for ((headerKey, headerValue) in headers.entryIterator) {
-                        configHeaders[headerKey] = headerValue as String
-                    }
-                    configSendDetailsRequestDescriptor = RequestDescriptor(url, configHeaders)
-                }
-
                 val paymentMethodsJsonStr = options.getString("paymentMethodsJsonStr") as String
                 val clientKey = options.getString("clientKey") as String
                 val environment = options.getString("environment") as String
@@ -270,7 +346,7 @@ class RNAdyenModule(private var reactContext: ReactApplicationContext) : ReactCo
                     )
                 }
 
-                context = Context(promise, configSendPaymentsRequestDescriptor, configSendDetailsRequestDescriptor, configAmount, reference, returnUrl ?: RedirectComponent.getReturnUrl(reactContext))
+                context = Context(reactContext, promise, configAmount, reference, returnUrl ?: RedirectComponent.getReturnUrl(reactContext))
 
                 DropIn.startPayment(
                     activity,
@@ -281,6 +357,22 @@ class RNAdyenModule(private var reactContext: ReactApplicationContext) : ReactCo
         } catch (e: Throwable) {
             promise.reject(e)
         }
+    }
+
+    @ReactMethod
+    fun passPaymentResponse(response: ReadableMap) {
+        sendResultFn?.invoke(convertMapToJson(response))
+    }
+
+    @ReactMethod
+    fun passPaymentDetailsResponse(response: ReadableMap) {
+        sendResultFn?.invoke(convertMapToJson(response))
+    }
+
+    @ReactMethod
+    fun passError(reason: String) {
+        context?.promise?.reject("JS Error", reason)
+        // TODO close drop in activity
     }
 
     override fun onActivityResult(

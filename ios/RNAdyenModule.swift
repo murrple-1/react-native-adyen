@@ -1,35 +1,33 @@
-import Foundation
-
 import PassKit
 
 import Adyen
 
 @objc(RNAdyenModule)
-class RNAdyenModule: NSObject {
-    struct RequestDescriptor {
-        var url: String
-        var headers: [String: String]
-    }
-
+class RNAdyenModule: RCTEventEmitter {
     struct Context {
         var dropInComponent: DropInComponent
         var resolve: RCTPromiseResolveBlock
         var reject: RCTPromiseRejectBlock
-        var sendPaymentsRequestDescriptor: RequestDescriptor
-        var sendDetailsRequestDescriptor: RequestDescriptor
         var amount: Amount
         var reference: String
         var returnUrl: String
-    }
-
-    @objc(requiresMainQueueSetup) static func requiresMainQueueSetup() -> Bool {
-        return true
     }
 
     static let jsonEncoder = JSONEncoder()
     static let jsonDecoder = JSONDecoder()
 
     static var context: Context?
+    
+    var hasListener = false
+
+    override func startObserving() {
+        hasListener = true
+    }
+
+    override func stopObserving() {
+        hasListener = false
+    }
+
 
     @objc(startPayment:resolve:reject:) func startPayment(_ options: NSDictionary, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         DispatchQueue.main.async {
@@ -40,42 +38,6 @@ class RNAdyenModule: NSObject {
 
             do {
                 if let presentedViewController = RCTPresentedViewController() {
-                    var configSendPaymentsRequestDescriptor: RequestDescriptor
-                    if let sendPaymentsRequestDescriptor = options["sendPaymentsRequestDescriptor"] as? [String: AnyObject] {
-                        guard let url = sendPaymentsRequestDescriptor["url"] as? String else {
-                            reject("Options Error", "'url' missing", nil)
-                            return
-                        }
-
-                        guard let headers = sendPaymentsRequestDescriptor["headers"] as? [String: String] else {
-                            reject("Options Error", "'headers' missing", nil)
-                            return
-                        }
-
-                        configSendPaymentsRequestDescriptor = RequestDescriptor(url: url, headers: headers)
-                    } else {
-                        reject("Options Error", "'sendPaymentsRequestDescriptor' missing", nil)
-                        return
-                    }
-
-                    var configSendDetailsRequestDescriptor: RequestDescriptor
-                    if let sendDetailsRequestDescriptor = options["sendDetailsRequestDescriptor"] as? [String: AnyObject] {
-                        guard let url = sendDetailsRequestDescriptor["url"] as? String else {
-                            reject("Options Error", "'url' missing", nil)
-                            return
-                        }
-
-                        guard let headers = sendDetailsRequestDescriptor["headers"] as? [String: String] else {
-                            reject("Options Error", "'headers' missing", nil)
-                            return
-                        }
-
-                        configSendDetailsRequestDescriptor = RequestDescriptor(url: url, headers: headers)
-                    } else {
-                        reject("Options Error", "'sendPaymentsRequestDescriptor' missing", nil)
-                        return
-                    }
-
                     guard let paymentMethodsJsonStr = options["paymentMethodsJsonStr"] as? String else {
                         reject("Options Error", "'paymentMethodsJsonStr' missing", nil)
                         return
@@ -389,7 +351,7 @@ class RNAdyenModule: NSObject {
                     let dropInComponent = DropInComponent(paymentMethods: paymentMethods, configuration: dropInConfiguration)
                     dropInComponent.delegate = self
 
-                    RNAdyenModule.context = RNAdyenModule.Context(dropInComponent: dropInComponent, resolve: resolve, reject: reject, sendPaymentsRequestDescriptor: configSendPaymentsRequestDescriptor, sendDetailsRequestDescriptor: configSendDetailsRequestDescriptor, amount: Amount(value: amountValue, currencyCode: amountCurrency), reference: reference, returnUrl: returnUrl)
+                    RNAdyenModule.context = RNAdyenModule.Context(dropInComponent: dropInComponent, resolve: resolve, reject: reject, amount: Amount(value: amountValue, currencyCode: amountCurrency), reference: reference, returnUrl: returnUrl)
 
                     presentedViewController.present(dropInComponent.viewController, animated: true)
 
@@ -398,6 +360,53 @@ class RNAdyenModule: NSObject {
                 }
             } catch let error {
                 reject("Unknown Error", error.localizedDescription, error)
+            }
+        }
+    }
+    
+    @objc(passPaymentResponse:) func passPaymentResponse(_ response: NSDictionary) {
+        if let context = RNAdyenModule.context {
+            self.handlePaymentsDetailsResponse(component: context.dropInComponent, context: context, response: response)
+        }
+    }
+    
+    @objc(passPaymentDetailsResponse:) func passPaymentDetailsResponse(_ response: NSDictionary) {
+        if let context = RNAdyenModule.context {
+            self.handlePaymentsDetailsResponse(component: context.dropInComponent, context: context, response: response)
+        }
+    }
+    
+    @objc(passError:) func passError(_ reason: NSString) {
+        if let context = RNAdyenModule.context {
+            self.handleError(component: context.dropInComponent, reject: context.reject, code: "JS Error", message: reason as String, error: nil)
+        }
+    }
+    
+    private func handlePaymentsDetailsResponse(component: DropInComponent, context: Context, response: NSDictionary) {
+        do {
+            let data = try JSONSerialization.data(withJSONObject: response, options: JSONSerialization.WritingOptions())
+            let response = try RNAdyenModule.jsonDecoder.decode(PaymentsDetailsResponseBody.self, from: data)
+            if let action = response.action {
+                DispatchQueue.main.async {
+                    component.handle(action)
+                }
+            } else {
+                var resolveArray = [response.resultCode]
+                if let refusalReason = response.refusalReason {
+                    resolveArray.append(refusalReason)
+                }
+
+                DispatchQueue.main.async {
+                    context.resolve(resolveArray)
+
+                    self.dismissDropInComponent(dropInComponent: component, animated: true) {
+                        RNAdyenModule.context = nil
+                    }
+                }
+            }
+        } catch let error {
+            DispatchQueue.main.async {
+                self.handleError(component: component, reject: context.reject, code: "Network Error", message: "Unknown error", error: error)
             }
         }
     }
@@ -462,11 +471,9 @@ extension RNAdyenModule: DropInComponentDelegate {
     }
 
     func didSubmit(_ data: PaymentComponentData, for paymentMethod: PaymentMethod, from component: DropInComponent) {
-        if let context = RNAdyenModule.context {
-            do {
-                if let url = URL(string: context.sendPaymentsRequestDescriptor.url) {
-                    var request = URLRequest(url: url)
-
+        if hasListener {
+            if let context = RNAdyenModule.context {
+                do {
                     var amount: Amount
                     if let dataAmount = data.amount {
                         amount = dataAmount
@@ -476,93 +483,36 @@ extension RNAdyenModule: DropInComponentDelegate {
 
                     let paymentsBody = PaymentsRequestBody(amount: amount, paymentMethod: data.paymentMethod.encodable, reference: context.reference, returnUrl: context.returnUrl)
                     let json = try RNAdyenModule.jsonEncoder.encode(paymentsBody)
-
-                    for (headerKey, headerValue) in context.sendPaymentsRequestDescriptor.headers {
-                        request.setValue(headerValue, forHTTPHeaderField: headerKey)
+                    if let obj = try JSONSerialization.jsonObject(with: json, options: JSONSerialization.ReadingOptions()) as? NSDictionary {
+                        self.sendEvent(withName: "PaymentEvent", body:obj)
+                    } else {
+                        // TODO implement
+                        self.handleError(component: component, reject: nil, code: "", message: "", error: nil)
                     }
-                    request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-                    request.httpMethod = "POST"
-                    request.httpBody = json
-
-                    let task = URLSession.shared.dataTask(with: request) { data, response, error in
-                        self.handlePaymentsDetailsResponse(component: component, context: context, data: data, response: response, error: error)
-                    }
-
-                    task.resume()
+                } catch let error {
+                    // TODO implement
+                    self.handleError(component: component, reject: nil, code: "", message: "", error: error)
                 }
-            } catch let error {
-                self.handleError(component: component, reject: nil, code: "Network Error", message: "Unknown network error", error: error)
+            } else {
+                self.handleError(component: component, reject: nil, code: "Context Error", message: "Context not set", error: nil)
             }
-        } else {
-            self.handleError(component: component, reject: nil, code: "Context Error", message: "Context not set", error: nil)
         }
     }
 
     func didProvide(_ data: ActionComponentData, from component: DropInComponent) {
-        do {
-            if let context = RNAdyenModule.context, let url = URL(string: context.sendDetailsRequestDescriptor.url) {
-                var request = URLRequest(url: url)
-
+        if hasListener {
+            do {
                 let detailsBody = PaymentsDetailsRequestBody(paymentData: data.paymentData, details: data.details.encodable)
                 let json = try RNAdyenModule.jsonEncoder.encode(detailsBody)
-
-                for (headerKey, headerValue) in context.sendDetailsRequestDescriptor.headers {
-                    request.setValue(headerValue, forHTTPHeaderField: headerKey)
+                if let obj = try JSONSerialization.jsonObject(with: json, options: JSONSerialization.ReadingOptions()) as? NSDictionary {
+                    self.sendEvent(withName: "PaymentDetailsEvent", body:obj)
+                } else {
+                    // TODO implement
+                    self.handleError(component: component, reject: nil, code: "", message: "", error: nil)
                 }
-                request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-                request.httpMethod = "POST"
-                request.httpBody = json
-
-                let task = URLSession.shared.dataTask(with: request) { data, response, error in
-                    self.handlePaymentsDetailsResponse(component: component, context: context, data: data, response: response, error: error)
-                }
-
-                task.resume()
-            }
-        } catch let error {
-            self.handleError(component: component, reject: nil, code: "Network Error", message: "Unknown network error", error: error)
-        }
-    }
-
-    private func handlePaymentsDetailsResponse(component: DropInComponent, context: Context, data: Data?, response: URLResponse?, error: Error?) {
-        guard let data = data, let response = response as? HTTPURLResponse, error == nil else {
-            DispatchQueue.main.async {
-                self.handleError(component: component, reject: context.reject, code: "Network Error", message: error?.localizedDescription ?? "Unknown network error", error: error)
-            }
-            return
-        }
-
-        guard (200 ... 299) ~= response.statusCode else {
-            let dataStr = String(data: data, encoding: String.Encoding.utf8) ?? ""
-            DispatchQueue.main.async {
-                self.handleError(component: component, reject: context.reject, code: "Network Error", message: String(format: "Status Code: %d\n%@", response.statusCode, dataStr), error: nil)
-            }
-            return
-        }
-
-        do {
-            let response = try RNAdyenModule.jsonDecoder.decode(PaymentsDetailsResponseBody.self, from: data)
-            if let action = response.action {
-                DispatchQueue.main.async {
-                    component.handle(action)
-                }
-            } else {
-                var resolveArray = [response.resultCode]
-                if let refusalReason = response.refusalReason {
-                    resolveArray.append(refusalReason)
-                }
-
-                DispatchQueue.main.async {
-                    context.resolve(resolveArray)
-
-                    self.dismissDropInComponent(dropInComponent: component, animated: true) {
-                        RNAdyenModule.context = nil
-                    }
-                }
-            }
-        } catch let error {
-            DispatchQueue.main.async {
-                self.handleError(component: component, reject: context.reject, code: "Network Error", message: "Unknown error", error: error)
+            } catch let error {
+                // TODO implement
+                self.handleError(component: component, reject: nil, code: "", message: "", error: error)
             }
         }
     }

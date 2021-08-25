@@ -365,17 +365,38 @@ export async function _getPaymentMethods({
 
 export interface _SendPaymentOptions {
   requestDescriptor: RequestDescriptor;
+  amount: {
+    currency: CurrencyType;
+    value: number;
+  };
+  paymentMethod: Record<string, unknown>;
+  reference: string;
+  returnUrl: string;
 }
 
 /**
  * This method is not strictly recommended for use in your app, but should give you a starting point on how to send the `/payment` payload, which is necessary for `startPayment()`.
  */
-export async function _sendPayment({ requestDescriptor }: _SendPaymentOptions) {
-  // TODO
+export async function _sendPayment({ requestDescriptor, amount, paymentMethod, reference, returnUrl }: _SendPaymentOptions) {
+  const response = await fetch(requestDescriptor.url, {
+    headers: {
+      ...requestDescriptor.headers,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      amount,
+      paymentMethod,
+      reference,
+      returnUrl,
+    }),
+    method: 'POST',
+  });
+  return (await response.json()) as Record<string, unknown>;
 }
 
 export interface _SendPaymentDetailsOptions {
   requestDescriptor: RequestDescriptor;
+  requestObj: Record<string, unknown>;
 }
 
 /**
@@ -383,8 +404,17 @@ export interface _SendPaymentDetailsOptions {
  */
 export async function _sendPaymentDetails({
   requestDescriptor,
+  requestObj,
 }: _SendPaymentDetailsOptions) {
-  // TODO
+  const response = await fetch(requestDescriptor.url, {
+    headers: {
+      ...requestDescriptor.headers,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(requestObj),
+    method: 'POST',
+  });
+  return (await response.json()) as Record<string, unknown>;
 }
 
 /**
@@ -565,13 +595,21 @@ export interface StartPaymentOptions {
 /**
  * TODO
  */
-export type SendPaymentFn = (obj: unknown) => Promise<Record<string, unknown>>;
+export type SendPaymentFn = (obj: {
+  amount: {
+    currency: CurrencyType;
+    value: number;
+  };
+  paymentMethod: Record<string, unknown>;
+  reference: string;
+  returnUrl: string;
+}) => Promise<Record<string, unknown>>;
 
 /**
  * TODO
  */
 export type SendPaymentDetailsFn = (
-  obj: unknown,
+  obj: Record<string, unknown>,
 ) => Promise<Record<string, unknown>>;
 
 let _paymentStarted = false;
@@ -586,7 +624,7 @@ export async function startPayment(
   options: StartPaymentOptions,
   sendPaymentsFn: SendPaymentFn,
   sendPaymentDetailsFn: SendPaymentDetailsFn,
-): Promise<[string] | [string, string]> {
+) {
   if (_paymentStarted) {
     throw new Error('payment already started');
   }
@@ -596,7 +634,7 @@ export async function startPayment(
   let paymentEventListener: EmitterSubscription | null = null;
   let paymentDetailsEventListener: EmitterSubscription | null = null;
 
-  return new Promise<[string] | [string, string]>((resolve, reject) => {
+  try {
     paymentEventListener = _eventEmitter.addListener(
       'PaymentEvent',
       paymentObj => {
@@ -624,19 +662,8 @@ export async function startPayment(
       },
     );
 
-    (
-      RNAdyenModule.startPayment(options) as Promise<
-        [string] | [string, string]
-      >
-    ).then(
-      response => {
-        resolve(response);
-      },
-      reason => {
-        reject(reason);
-      },
-    );
-  }).finally(() => {
+    return (await RNAdyenModule.startPayment(options)) as [string] | [string, string];
+  } finally {
     if (paymentEventListener !== null) {
       paymentEventListener.remove();
     }
@@ -646,5 +673,5 @@ export async function startPayment(
     }
 
     _paymentStarted = false;
-  });
+  }
 }

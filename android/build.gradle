@@ -42,6 +42,4 @@ dependencies {
     implementation 'com.facebook.react:react-native:+'
 
     implementation 'com.adyen.checkout:drop-in:4.0.0'
-
-    implementation 'com.android.volley:volley:1.2.0'
 }

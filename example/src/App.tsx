@@ -14,6 +14,8 @@ import { v4 as uuid4 } from 'uuid';
 
 import {
   _getPaymentMethods,
+  _sendPayment,
+  _sendPaymentDetails,
   startPayment,
   Amount,
 } from '@murrple_1/react-native-adyen';
@@ -66,14 +68,6 @@ const App = () => {
           try {
             const checkoutResponse = await startPayment({
               paymentMethodsJsonStr,
-              sendPaymentsRequestDescriptor: {
-                url: `${hostname}/payments`,
-                headers: {},
-              },
-              sendDetailsRequestDescriptor: {
-                url: `${hostname}/payments/details`,
-                headers: {},
-              },
               reference: uuid4(),
               returnUrl: {
                 ios: 'adyen-example://',
@@ -103,7 +97,24 @@ const App = () => {
                 ],
                 merchantIdentifier: "Gary's Corner Store",
               },
-            });
+            },
+            obj => _sendPayment({
+              requestDescriptor: {
+                url: `${hostname}/payments`,
+                headers: {},
+              },
+              amount: obj.amount,
+              paymentMethod: obj.paymentMethod,
+              reference: obj.reference,
+              returnUrl: obj.returnUrl,
+            }),
+            obj => _sendPaymentDetails({
+              requestDescriptor: {
+                url: `${hostname}/payments/details`,
+                headers: {},
+              },
+              requestObj: obj,
+            }));
             const [resultCode, refusalReason] = checkoutResponse;
             let alertStr: string;
             switch (resultCode) {

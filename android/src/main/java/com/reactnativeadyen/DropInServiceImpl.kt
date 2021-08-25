@@ -1,129 +1,78 @@
 package com.reactnativeadyen
 
+import com.adyen.checkout.components.ActionComponentData
+import com.adyen.checkout.components.PaymentComponentState
 import com.adyen.checkout.dropin.service.DropInService
 import com.adyen.checkout.dropin.service.DropInServiceResult
-import com.android.volley.Request
-import com.android.volley.RequestQueue
-import com.android.volley.Response
-import com.android.volley.VolleyError
-import com.android.volley.toolbox.JsonObjectRequest
-import com.android.volley.toolbox.RequestFuture
-import com.android.volley.toolbox.Volley
-import com.facebook.react.common.StandardCharsets
-import java.util.concurrent.ExecutionException
+import com.facebook.react.bridge.*
+import com.facebook.react.modules.core.DeviceEventManagerModule
 import org.json.JSONObject
 
 class DropInServiceImpl : DropInService() {
-    private val requestQueue: RequestQueue by lazy {
-        Volley.newRequestQueue(applicationContext)
-    }
-
-    private class MyJsonObjectRequest(
-        method: Int,
-        url: String?,
-        jsonRequest: JSONObject?,
-        listener: Response.Listener<JSONObject?>?,
-        errorListener: Response.ErrorListener?,
-        private val headers: Map<String, String>
-    ) : JsonObjectRequest(method, url, jsonRequest, listener, errorListener) {
-        override fun getHeaders(): Map<String, String> {
-            return mutableMapOf<String, String>().apply {
-                putAll(super.getHeaders())
-                putAll(this@MyJsonObjectRequest.headers)
-                this["Content-Type"] = "application/json"
-            }
-        }
-    }
-
-    override fun makePaymentsCall(paymentComponentJson: JSONObject): DropInServiceResult {
+    override fun onPaymentsCallRequested(
+        paymentComponentState: PaymentComponentState<*>,
+        paymentComponentJson: JSONObject
+    ) {
         try {
             val context = RNAdyenModule.context as RNAdyenModule.Context
-
-            val sendPaymentsRequestDescriptor = context.sendPaymentsRequestDescriptor
-
-            val jsonObject = JSONObject().apply {
-                put(
+            val params = Arguments.createMap().apply {
+                putMap(
                     "amount",
-                    if (paymentComponentJson.has("amount")) paymentComponentJson.getJSONObject("amount") else
-                        JSONObject().apply {
+                    if (paymentComponentJson.has("amount")) RNAdyenModule.convertJsonToMap(paymentComponentJson.getJSONObject("amount")) else
+                        Arguments.createMap().apply {
                             val amount = context.amount
-                            put("currency", amount.currency)
-                            put("value", amount.value)
+                            putString("currency", amount.currency)
+                            putInt("value", amount.value)
                         }
                 )
-                put("paymentMethod", paymentComponentJson.getJSONObject("paymentMethod"))
-                put("reference", context.reference)
-                put("returnUrl", context.returnUrl)
+                putMap("paymentMethod", RNAdyenModule.convertJsonToMap(paymentComponentJson.getJSONObject("paymentMethod")))
+                putString("reference", context.reference)
+                putString("returnUrl", context.returnUrl)
             }
 
-            val future: RequestFuture<JSONObject> = RequestFuture.newFuture()
-            val request = MyJsonObjectRequest(
-                Request.Method.POST,
-                sendPaymentsRequestDescriptor.url,
-                jsonObject,
-                future,
-                future,
-                sendPaymentsRequestDescriptor.headers
-            )
-            requestQueue.add(request)
-
-            return this.handlePaymentsDetailsResponse(future)
+            RNAdyenModule.sendResultFn = { response ->
+                RNAdyenModule.sendResultFn = null
+                sendResult(handleResponse(response))
+            }
+            context.reactContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java).emit("PaymentEvent", params)
         } catch (e: Throwable) {
             RNAdyenModule.context?.promise?.reject(e)
             throw e
         }
     }
 
-    override fun makeDetailsCall(actionComponentJson: JSONObject): DropInServiceResult {
+    override fun onDetailsCallRequested(
+        actionComponentData: ActionComponentData,
+        actionComponentJson: JSONObject
+    ) {
         try {
             val context = RNAdyenModule.context as RNAdyenModule.Context
 
-            val sendDetailsRequestDescriptor = context.sendDetailsRequestDescriptor
+            val params = RNAdyenModule.convertJsonToMap(actionComponentJson)
 
-            val future: RequestFuture<JSONObject> = RequestFuture.newFuture()
-            val request = MyJsonObjectRequest(
-                Request.Method.POST,
-                sendDetailsRequestDescriptor.url,
-                actionComponentJson,
-                future,
-                future,
-                sendDetailsRequestDescriptor.headers
-            )
-            requestQueue.add(request)
+            RNAdyenModule.sendResultFn = { response ->
+                RNAdyenModule.sendResultFn = null
+                sendResult(handleResponse(response))
+            }
 
-            return this.handlePaymentsDetailsResponse(future)
+            context.reactContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java).emit("PaymentDetailsEvent", params)
         } catch (e: Throwable) {
             RNAdyenModule.context?.promise?.reject(e)
             throw e
         }
     }
 
-    private fun handlePaymentsDetailsResponse(future: RequestFuture<JSONObject>): DropInServiceResult {
-        try {
-            val response = future.get()
-
-            return if (response.has("action")) {
-                val action = response.getJSONObject("action")
-                DropInServiceResult.Action(action.toString())
+    private fun handleResponse(response: JSONObject): DropInServiceResult {
+        return if (response.has("action")) {
+            val action = response.getJSONObject("action")
+            DropInServiceResult.Action(action.toString())
+        } else {
+            if (response.has("refusalReason")) {
+                val refusalReason = response.getString("refusalReason")
+                DropInServiceResult.Error(refusalReason, "Refusal")
             } else {
-                if (response.has("refusalReason")) {
-                    val refusalReason = response.getString("refusalReason")
-                    DropInServiceResult.Error(refusalReason, "Refusal")
-                } else {
-                    val resultCode = response.getString("resultCode")
-                    DropInServiceResult.Finished(resultCode)
-                }
-            }
-        } catch (e: InterruptedException) {
-            return DropInServiceResult.Error(e.message, "InterruptedException")
-        } catch (e: ExecutionException) {
-            val cause = e.cause
-            return if (cause is VolleyError) {
-                val responseBody = String(cause.networkResponse.data, StandardCharsets.UTF_8)
-                DropInServiceResult.Error(responseBody, "VolleyError")
-            } else {
-                val message = cause?.message
-                DropInServiceResult.Error(message ?: "Unknown Error", "ExecutionException")
+                val resultCode = response.getString("resultCode")
+                DropInServiceResult.Finished(resultCode)
             }
         }
     }
