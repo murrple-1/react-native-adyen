@@ -3,7 +3,6 @@ package com.reactnativeadyen
 import com.adyen.checkout.components.ActionComponentData
 import com.adyen.checkout.components.PaymentComponentState
 import com.adyen.checkout.dropin.service.DropInService
-import com.adyen.checkout.dropin.service.DropInServiceResult
 import com.facebook.react.bridge.*
 import com.facebook.react.modules.core.DeviceEventManagerModule
 import org.json.JSONObject
@@ -30,10 +29,7 @@ class DropInServiceImpl : DropInService() {
                 putString("returnUrl", context.returnUrl)
             }
 
-            RNAdyenModule.sendResultFn = { response ->
-                RNAdyenModule.sendResultFn = null
-                sendResult(handleResponse(response))
-            }
+            RNAdyenModule.sendResultFn = { result -> sendResult(result) }
             context.reactContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java).emit("PaymentEvent", params)
         } catch (e: Throwable) {
             RNAdyenModule.context?.promise?.reject(e)
@@ -50,30 +46,12 @@ class DropInServiceImpl : DropInService() {
 
             val params = RNAdyenModule.convertJsonToMap(actionComponentJson)
 
-            RNAdyenModule.sendResultFn = { response ->
-                RNAdyenModule.sendResultFn = null
-                sendResult(handleResponse(response))
-            }
+            RNAdyenModule.sendResultFn = { result -> sendResult(result) }
 
             context.reactContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java).emit("PaymentDetailsEvent", params)
         } catch (e: Throwable) {
             RNAdyenModule.context?.promise?.reject(e)
             throw e
-        }
-    }
-
-    private fun handleResponse(response: JSONObject): DropInServiceResult {
-        return if (response.has("action")) {
-            val action = response.getJSONObject("action")
-            DropInServiceResult.Action(action.toString())
-        } else {
-            if (response.has("refusalReason")) {
-                val refusalReason = response.getString("refusalReason")
-                DropInServiceResult.Error(refusalReason, "Refusal")
-            } else {
-                val resultCode = response.getString("resultCode")
-                DropInServiceResult.Finished(resultCode)
-            }
         }
     }
 }

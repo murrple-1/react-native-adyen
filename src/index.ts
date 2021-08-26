@@ -612,7 +612,6 @@ export type SendPaymentDetailsFn = (
   obj: Record<string, unknown>,
 ) => Promise<Record<string, unknown>>;
 
-let _paymentStarted = false;
 const _eventEmitter = new NativeEventEmitter(RNAdyenModule);
 
 /**
@@ -625,12 +624,6 @@ export async function startPayment(
   sendPaymentsFn: SendPaymentFn,
   sendPaymentDetailsFn: SendPaymentDetailsFn,
 ) {
-  if (_paymentStarted) {
-    throw new Error('payment already started');
-  }
-
-  _paymentStarted = true;
-
   let paymentEventListener: EmitterSubscription | null = null;
   let paymentDetailsEventListener: EmitterSubscription | null = null;
 
@@ -671,7 +664,5 @@ export async function startPayment(
     if (paymentDetailsEventListener !== null) {
       paymentDetailsEventListener.remove();
     }
-
-    _paymentStarted = false;
   }
 }

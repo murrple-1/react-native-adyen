@@ -10,6 +10,7 @@ import com.adyen.checkout.core.api.Environment
 import com.adyen.checkout.dropin.DropIn
 import com.adyen.checkout.dropin.DropInConfiguration
 import com.adyen.checkout.dropin.DropInResult
+import com.adyen.checkout.dropin.service.DropInServiceResult
 import com.adyen.checkout.googlepay.GooglePayConfiguration
 import com.adyen.checkout.redirect.RedirectComponent
 import com.facebook.react.bridge.*
@@ -26,7 +27,7 @@ class RNAdyenModule(private var reactContext: ReactApplicationContext) : ReactCo
 
     companion object {
         var context: Context? = null
-        var sendResultFn: ((response: JSONObject) -> Unit)? = null
+        var sendResultFn: ((result: DropInServiceResult) -> Unit)? = null
 
         fun convertJsonToMap(jsonObject: JSONObject): WritableMap {
             val map = Arguments.createMap()
@@ -361,18 +362,29 @@ class RNAdyenModule(private var reactContext: ReactApplicationContext) : ReactCo
 
     @ReactMethod
     fun passPaymentResponse(response: ReadableMap) {
-        sendResultFn?.invoke(convertMapToJson(response))
+        try {
+            sendResultFn?.invoke(jsResponseToDropInServiceResult(response))
+        } finally {
+            sendResultFn = null
+        }
     }
 
     @ReactMethod
     fun passPaymentDetailsResponse(response: ReadableMap) {
-        sendResultFn?.invoke(convertMapToJson(response))
+        try {
+            sendResultFn?.invoke(jsResponseToDropInServiceResult(response))
+        } finally {
+            sendResultFn = null
+        }
     }
 
     @ReactMethod
     fun passError(reason: String) {
-        context?.promise?.reject("JS Error", reason)
-        // TODO close drop in activity
+        try {
+            sendResultFn?.invoke(DropInServiceResult.Error(reason, "JS Error"))
+        } finally {
+            sendResultFn = null
+        }
     }
 
     override fun onActivityResult(
@@ -408,5 +420,21 @@ class RNAdyenModule(private var reactContext: ReactApplicationContext) : ReactCo
 
     override fun onNewIntent(intent: Intent?) {
         TODO("Not yet implemented")
+    }
+
+    private fun jsResponseToDropInServiceResult(response: ReadableMap): DropInServiceResult {
+        val jsonResponse = convertMapToJson(response)
+        return if (jsonResponse.has("action")) {
+            val action = jsonResponse.getJSONObject("action")
+            DropInServiceResult.Action(action.toString())
+        } else {
+            if (jsonResponse.has("refusalReason")) {
+                val refusalReason = jsonResponse.getString("refusalReason")
+                DropInServiceResult.Error(refusalReason, "Refusal")
+            } else {
+                val resultCode = jsonResponse.getString("resultCode")
+                DropInServiceResult.Finished(resultCode)
+            }
+        }
     }
 }

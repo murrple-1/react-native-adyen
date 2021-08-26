@@ -489,12 +489,10 @@ extension RNAdyenModule: DropInComponentDelegate {
                     if let obj = try JSONSerialization.jsonObject(with: json, options: JSONSerialization.ReadingOptions()) as? NSDictionary {
                         self.sendEvent(withName: "PaymentEvent", body: obj)
                     } else {
-                        // TODO implement
-                        self.handleError(component: component, reject: nil, code: "", message: "", error: nil)
+                        self.handleError(component: component, reject: nil, code: "Native Event Error", message: "Failed to send native event", error: nil)
                     }
                 } catch let error {
-                    // TODO implement
-                    self.handleError(component: component, reject: nil, code: "", message: "", error: error)
+                    self.handleError(component: component, reject: nil, code: "Native Event Error", message: "Failed to send native event", error: error)
                 }
             } else {
                 self.handleError(component: component, reject: nil, code: "Context Error", message: "Context not set", error: nil)
@@ -510,12 +508,10 @@ extension RNAdyenModule: DropInComponentDelegate {
                 if let obj = try JSONSerialization.jsonObject(with: json, options: JSONSerialization.ReadingOptions()) as? NSDictionary {
                     self.sendEvent(withName: "PaymentDetailsEvent", body: obj)
                 } else {
-                    // TODO implement
-                    self.handleError(component: component, reject: nil, code: "", message: "", error: nil)
+                    self.handleError(component: component, reject: nil, code: "Native Event Error", message: "Failed to send native event", error: nil)
                 }
             } catch let error {
-                // TODO implement
-                self.handleError(component: component, reject: nil, code: "", message: "", error: error)
+                self.handleError(component: component, reject: nil, code: "Native Event Error", message: "Failed to send native event", error: error)
             }
         }
     }
