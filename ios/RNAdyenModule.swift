@@ -17,7 +17,7 @@ class RNAdyenModule: RCTEventEmitter {
     static let jsonDecoder = JSONDecoder()
 
     static var context: Context?
-    
+
     var hasListener = false
 
     override func startObserving() {
@@ -28,6 +28,9 @@ class RNAdyenModule: RCTEventEmitter {
         hasListener = false
     }
 
+    override func supportedEvents() -> [String]! {
+        return ["PaymentEvent", "PaymentDetailsEvent"]
+    }
 
     @objc(startPayment:resolve:reject:) func startPayment(_ options: NSDictionary, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         DispatchQueue.main.async {
@@ -363,25 +366,25 @@ class RNAdyenModule: RCTEventEmitter {
             }
         }
     }
-    
+
     @objc(passPaymentResponse:) func passPaymentResponse(_ response: NSDictionary) {
         if let context = RNAdyenModule.context {
             self.handlePaymentsDetailsResponse(component: context.dropInComponent, context: context, response: response)
         }
     }
-    
+
     @objc(passPaymentDetailsResponse:) func passPaymentDetailsResponse(_ response: NSDictionary) {
         if let context = RNAdyenModule.context {
             self.handlePaymentsDetailsResponse(component: context.dropInComponent, context: context, response: response)
         }
     }
-    
+
     @objc(passError:) func passError(_ reason: NSString) {
         if let context = RNAdyenModule.context {
             self.handleError(component: context.dropInComponent, reject: context.reject, code: "JS Error", message: reason as String, error: nil)
         }
     }
-    
+
     private func handlePaymentsDetailsResponse(component: DropInComponent, context: Context, response: NSDictionary) {
         do {
             let data = try JSONSerialization.data(withJSONObject: response, options: JSONSerialization.WritingOptions())
@@ -484,7 +487,7 @@ extension RNAdyenModule: DropInComponentDelegate {
                     let paymentsBody = PaymentsRequestBody(amount: amount, paymentMethod: data.paymentMethod.encodable, reference: context.reference, returnUrl: context.returnUrl)
                     let json = try RNAdyenModule.jsonEncoder.encode(paymentsBody)
                     if let obj = try JSONSerialization.jsonObject(with: json, options: JSONSerialization.ReadingOptions()) as? NSDictionary {
-                        self.sendEvent(withName: "PaymentEvent", body:obj)
+                        self.sendEvent(withName: "PaymentEvent", body: obj)
                     } else {
                         // TODO implement
                         self.handleError(component: component, reject: nil, code: "", message: "", error: nil)
@@ -505,7 +508,7 @@ extension RNAdyenModule: DropInComponentDelegate {
                 let detailsBody = PaymentsDetailsRequestBody(paymentData: data.paymentData, details: data.details.encodable)
                 let json = try RNAdyenModule.jsonEncoder.encode(detailsBody)
                 if let obj = try JSONSerialization.jsonObject(with: json, options: JSONSerialization.ReadingOptions()) as? NSDictionary {
-                    self.sendEvent(withName: "PaymentDetailsEvent", body:obj)
+                    self.sendEvent(withName: "PaymentDetailsEvent", body: obj)
                 } else {
                     // TODO implement
                     self.handleError(component: component, reject: nil, code: "", message: "", error: nil)
