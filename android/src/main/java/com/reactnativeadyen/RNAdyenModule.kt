@@ -2,7 +2,6 @@ package com.reactnativeadyen
 
 import android.app.Activity
 import android.content.Intent
-import androidx.annotation.Keep
 import com.adyen.checkout.card.CardConfiguration
 import com.adyen.checkout.card.data.CardType
 import com.adyen.checkout.components.model.PaymentMethodsApiResponse
@@ -132,7 +131,6 @@ class RNAdyenModule(private var reactContext: ReactApplicationContext) : ReactCo
     override fun getName() = "RNAdyenModule"
 
     @ReactMethod
-    @Keep
     fun startPayment(options: ReadableMap, promise: Promise) {
         try {
             val activity = currentActivity
@@ -363,7 +361,6 @@ class RNAdyenModule(private var reactContext: ReactApplicationContext) : ReactCo
     }
 
     @ReactMethod
-    @Keep
     fun passPaymentResponse(response: ReadableMap) {
         try {
             sendResultFn?.invoke(jsResponseToDropInServiceResult(response))
@@ -373,7 +370,6 @@ class RNAdyenModule(private var reactContext: ReactApplicationContext) : ReactCo
     }
 
     @ReactMethod
-    @Keep
     fun passPaymentDetailsResponse(response: ReadableMap) {
         try {
             sendResultFn?.invoke(jsResponseToDropInServiceResult(response))
@@ -383,7 +379,6 @@ class RNAdyenModule(private var reactContext: ReactApplicationContext) : ReactCo
     }
 
     @ReactMethod
-    @Keep
     fun passError(reason: String) {
         try {
             sendResultFn?.invoke(DropInServiceResult.Error(reason, "JS Error"))
