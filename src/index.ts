@@ -377,7 +377,13 @@ export interface _SendPaymentOptions {
 /**
  * This method is not strictly recommended for use in your app, but should give you a starting point on how to send the `/payment` payload, which is necessary for `startPayment()`.
  */
-export async function _sendPayment({ requestDescriptor, amount, paymentMethod, reference, returnUrl }: _SendPaymentOptions) {
+export async function _sendPayment({
+  requestDescriptor,
+  amount,
+  paymentMethod,
+  reference,
+  returnUrl,
+}: _SendPaymentOptions) {
   const response = await fetch(requestDescriptor.url, {
     headers: {
       ...requestDescriptor.headers,
@@ -635,8 +641,8 @@ export async function startPayment(
           response => {
             RNAdyenModule.passPaymentResponse(response);
           },
-          reason => {
-            RNAdyenModule.passError(reason);
+          (reason: unknown) => {
+            RNAdyenModule.passError(String(reason));
           },
         );
       },
@@ -648,14 +654,16 @@ export async function startPayment(
           response => {
             RNAdyenModule.passPaymentDetailsResponse(response);
           },
-          reason => {
-            RNAdyenModule.passError(reason);
+          (reason: unknown) => {
+            RNAdyenModule.passError(String(reason));
           },
         );
       },
     );
 
-    return (await RNAdyenModule.startPayment(options)) as [string] | [string, string];
+    return (await RNAdyenModule.startPayment(options)) as
+      | [string]
+      | [string, string];
   } finally {
     if (paymentEventListener !== null) {
       paymentEventListener.remove();
