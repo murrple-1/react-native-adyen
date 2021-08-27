@@ -436,16 +436,20 @@ class RNAdyenModule(private var reactContext: ReactApplicationContext) : ReactCo
 
     private fun jsResponseToDropInServiceResult(response: ReadableMap): DropInServiceResult {
         val jsonResponse = convertMapToJson(response)
-        return if (jsonResponse.has("action")) {
-            val action = jsonResponse.getJSONObject("action")
+        val action = jsonResponse.optJSONObject("action")
+        return if (action != null) {
             DropInServiceResult.Action(action.toString())
         } else {
-            if (jsonResponse.has("refusalReason")) {
-                val refusalReason = jsonResponse.getString("refusalReason")
+            val refusalReason = jsonResponse.optString("refusalReason")
+            if (refusalReason != null) {
                 DropInServiceResult.Error(refusalReason, "Refusal")
             } else {
-                val resultCode = jsonResponse.getString("resultCode")
-                DropInServiceResult.Finished(resultCode)
+                val resultCode = jsonResponse.optString("resultCode")
+                if (resultCode != null) {
+                    DropInServiceResult.Finished(resultCode)
+                } else {
+                    DropInServiceResult.Error("Response malformed", "JS Error")
+                }
             }
         }
     }
