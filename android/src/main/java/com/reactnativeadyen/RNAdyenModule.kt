@@ -362,8 +362,14 @@ class RNAdyenModule(private var reactContext: ReactApplicationContext) : ReactCo
 
     @ReactMethod
     fun passPaymentResponse(response: ReadableMap) {
+        val dropInResult = try {
+            jsResponseToDropInServiceResult(response)
+        } catch (e: Throwable) {
+            DropInServiceResult.Error(e.message, "JS Error")
+        }
+
         try {
-            sendResultFn?.invoke(jsResponseToDropInServiceResult(response))
+            sendResultFn?.invoke(dropInResult)
         } finally {
             sendResultFn = null
         }
@@ -371,8 +377,14 @@ class RNAdyenModule(private var reactContext: ReactApplicationContext) : ReactCo
 
     @ReactMethod
     fun passPaymentDetailsResponse(response: ReadableMap) {
+        val dropInResult = try {
+            jsResponseToDropInServiceResult(response)
+        } catch (e: Throwable) {
+            DropInServiceResult.Error(e.message, "JS Error")
+        }
+
         try {
-            sendResultFn?.invoke(jsResponseToDropInServiceResult(response))
+            sendResultFn?.invoke(dropInResult)
         } finally {
             sendResultFn = null
         }
