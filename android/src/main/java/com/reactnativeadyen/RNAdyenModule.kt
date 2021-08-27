@@ -444,14 +444,14 @@ class RNAdyenModule(private var reactContext: ReactApplicationContext) : ReactCo
     private fun jsResponseToDropInServiceResult(response: ReadableMap): DropInServiceResult {
         val jsonResponse = convertMapToJson(response)
         return try {
-            val action = jsonResponse.getJSONObject("action")
+            val action = jsonResponse.get("action") as JSONObject
             DropInServiceResult.Action(action.toString())
         } catch (e: JSONException) {
             try {
-                val refusalReason = jsonResponse.getString("refusalReason")
+                val refusalReason = jsonResponse.get("refusalReason") as String
                 DropInServiceResult.Error(refusalReason)
             } catch (e: JSONException) {
-                val resultCode = jsonResponse.getString("resultCode")
+                val resultCode = jsonResponse.get("resultCode") as String
                 DropInServiceResult.Finished(resultCode)
             }
         }
