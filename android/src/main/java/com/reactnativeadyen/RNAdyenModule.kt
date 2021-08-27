@@ -2,6 +2,7 @@ package com.reactnativeadyen
 
 import android.app.Activity
 import android.content.Intent
+import android.util.Log
 import com.adyen.checkout.card.CardConfiguration
 import com.adyen.checkout.card.data.CardType
 import com.adyen.checkout.components.model.PaymentMethodsApiResponse
@@ -15,6 +16,7 @@ import com.adyen.checkout.googlepay.GooglePayConfiguration
 import com.adyen.checkout.redirect.RedirectComponent
 import com.facebook.react.bridge.*
 import org.json.JSONArray
+import org.json.JSONException
 import java.util.Locale
 import org.json.JSONObject
 
@@ -28,6 +30,8 @@ class RNAdyenModule(private var reactContext: ReactApplicationContext) : ReactCo
     companion object {
         var context: Context? = null
         var sendResultFn: ((result: DropInServiceResult) -> Unit)? = null
+
+        private const val TAG = "RNAdyenModule"
 
         fun convertJsonToMap(jsonObject: JSONObject): WritableMap {
             val map = Arguments.createMap()
@@ -365,7 +369,8 @@ class RNAdyenModule(private var reactContext: ReactApplicationContext) : ReactCo
         val dropInResult = try {
             jsResponseToDropInServiceResult(response)
         } catch (e: Throwable) {
-            DropInServiceResult.Error(e.message, "JS Error")
+            Log.wtf(TAG, e)
+            DropInServiceResult.Error()
         }
 
         try {
@@ -380,7 +385,8 @@ class RNAdyenModule(private var reactContext: ReactApplicationContext) : ReactCo
         val dropInResult = try {
             jsResponseToDropInServiceResult(response)
         } catch (e: Throwable) {
-            DropInServiceResult.Error(e.message, "JS Error")
+            Log.wtf(TAG, e)
+            DropInServiceResult.Error()
         }
 
         try {
@@ -393,7 +399,8 @@ class RNAdyenModule(private var reactContext: ReactApplicationContext) : ReactCo
     @ReactMethod
     fun passError(reason: String) {
         try {
-            sendResultFn?.invoke(DropInServiceResult.Error(reason, "JS Error"))
+            Log.e(TAG, "Error: $reason")
+            sendResultFn?.invoke(DropInServiceResult.Error())
         } finally {
             sendResultFn = null
         }
@@ -436,20 +443,16 @@ class RNAdyenModule(private var reactContext: ReactApplicationContext) : ReactCo
 
     private fun jsResponseToDropInServiceResult(response: ReadableMap): DropInServiceResult {
         val jsonResponse = convertMapToJson(response)
-        val action = jsonResponse.optJSONObject("action")
-        return if (action != null) {
+        return try {
+            val action = jsonResponse.getJSONObject("action")
             DropInServiceResult.Action(action.toString())
-        } else {
-            val refusalReason = jsonResponse.optString("refusalReason")
-            if (refusalReason != null) {
-                DropInServiceResult.Error(refusalReason, "Refusal")
-            } else {
-                val resultCode = jsonResponse.optString("resultCode")
-                if (resultCode != null) {
-                    DropInServiceResult.Finished(resultCode)
-                } else {
-                    DropInServiceResult.Error("Response malformed", "JS Error")
-                }
+        } catch (e: JSONException) {
+            try {
+                val refusalReason = jsonResponse.getString("refusalReason")
+                DropInServiceResult.Error(refusalReason)
+            } catch (e: JSONException) {
+                val resultCode = jsonResponse.getString("resultCode")
+                DropInServiceResult.Finished(resultCode)
             }
         }
     }
