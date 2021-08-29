@@ -32,6 +32,10 @@ class RNAdyenModule: RCTEventEmitter {
         return ["PaymentEvent", "PaymentDetailsEvent"]
     }
 
+    override static func requiresMainQueueSetup() -> Bool {
+        return true
+    }
+
     @objc(startPayment:resolve:reject:) func startPayment(_ options: NSDictionary, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         DispatchQueue.main.async {
             if RNAdyenModule.context != nil {
