@@ -19,6 +19,7 @@ import org.json.JSONArray
 import org.json.JSONException
 import java.util.Locale
 import org.json.JSONObject
+import java.lang.ClassCastException
 
 class RNAdyenModule(private var reactContext: ReactApplicationContext) : ReactContextBaseJavaModule(reactContext), ActivityEventListener {
     init {
@@ -446,13 +447,24 @@ class RNAdyenModule(private var reactContext: ReactApplicationContext) : ReactCo
         return try {
             val action = jsonResponse.get("action") as JSONObject
             DropInServiceResult.Action(action.toString())
-        } catch (e: JSONException) {
-            try {
-                val refusalReason = jsonResponse.get("refusalReason") as String
-                DropInServiceResult.Error(refusalReason)
-            } catch (e: JSONException) {
-                val resultCode = jsonResponse.get("resultCode") as String
-                DropInServiceResult.Finished(resultCode)
+        } catch (e: Exception) {
+            when (e) {
+                is JSONException,
+                is ClassCastException -> {
+                    try {
+                        val refusalReason = jsonResponse.get("refusalReason") as String
+                        DropInServiceResult.Error(refusalReason)
+                    } catch (e: Exception) {
+                        when (e) {
+                            is JSONException, is ClassCastException -> {
+                                val resultCode = jsonResponse.get("resultCode") as String
+                                DropInServiceResult.Finished(resultCode)
+                            }
+                            else -> throw e
+                        }
+                    }
+                }
+                else -> throw e
             }
         }
     }

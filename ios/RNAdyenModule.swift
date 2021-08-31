@@ -366,6 +366,7 @@ class RNAdyenModule: RCTEventEmitter {
                     reject("View Controller Error", "View Controller is nil", nil)
                 }
             } catch let error {
+                print("RNAdyenModule Error:", error)
                 reject("Unknown Error", error.localizedDescription, error)
             }
         }
@@ -412,6 +413,7 @@ class RNAdyenModule: RCTEventEmitter {
                 }
             }
         } catch let error {
+            print("RNAdyenModule Error:", error)
             DispatchQueue.main.async {
                 self.handleError(component: component, reject: context.reject, code: "Network Error", message: "Unknown error", error: error)
             }
@@ -496,6 +498,7 @@ extension RNAdyenModule: DropInComponentDelegate {
                         self.handleError(component: component, reject: nil, code: "Native Event Error", message: "Failed to send native event", error: nil)
                     }
                 } catch let error {
+                    print("RNAdyenModule Error:", error)
                     self.handleError(component: component, reject: nil, code: "Native Event Error", message: "Failed to send native event", error: error)
                 }
             } else {
@@ -515,6 +518,7 @@ extension RNAdyenModule: DropInComponentDelegate {
                     self.handleError(component: component, reject: nil, code: "Native Event Error", message: "Failed to send native event", error: nil)
                 }
             } catch let error {
+                print("RNAdyenModule Error:", error)
                 self.handleError(component: component, reject: nil, code: "Native Event Error", message: "Failed to send native event", error: error)
             }
         }
