@@ -419,6 +419,28 @@ class RNAdyenModule: RCTEventEmitter {
             }
         }
     }
+
+    private func handleError(component: DropInComponent, reject: RCTPromiseRejectBlock?, code: String, message: String, error: Error?) {
+        if let reject = reject {
+            reject(code, message, error)
+        }
+
+        self.dismissDropInComponent(dropInComponent: component, animated: true) {
+            RNAdyenModule.context = nil
+        }
+    }
+
+    private func dismissDropInComponent(dropInComponent: DropInComponent, animated: Bool, completion: (() -> Void)? = nil) {
+        let viewController = dropInComponent.viewController
+
+        if let presentedViewController = viewController.presentedViewController {
+            presentedViewController.dismiss(animated: animated) {
+                viewController.dismiss(animated: animated, completion: completion)
+            }
+        } else {
+            viewController.dismiss(animated: animated, completion: completion)
+        }
+    }
 }
 
 extension RNAdyenModule: DropInComponentDelegate {
@@ -495,11 +517,11 @@ extension RNAdyenModule: DropInComponentDelegate {
                     if let obj = try JSONSerialization.jsonObject(with: json, options: JSONSerialization.ReadingOptions()) as? NSDictionary {
                         self.sendEvent(withName: "PaymentEvent", body: obj)
                     } else {
-                        self.handleError(component: component, reject: nil, code: "Native Event Error", message: "Failed to send native event", error: nil)
+                        self.handleError(component: component, reject: context.reject, code: "Native Event Error", message: "Failed to send native event", error: nil)
                     }
                 } catch let error {
                     print("RNAdyenModule Error:", error)
-                    self.handleError(component: component, reject: nil, code: "Native Event Error", message: "Failed to send native event", error: error)
+                    self.handleError(component: component, reject: context.reject, code: "Native Event Error", message: "Failed to send native event", error: error)
                 }
             } else {
                 self.handleError(component: component, reject: nil, code: "Context Error", message: "Context not set", error: nil)
@@ -515,22 +537,12 @@ extension RNAdyenModule: DropInComponentDelegate {
                 if let obj = try JSONSerialization.jsonObject(with: json, options: JSONSerialization.ReadingOptions()) as? NSDictionary {
                     self.sendEvent(withName: "PaymentDetailsEvent", body: obj)
                 } else {
-                    self.handleError(component: component, reject: nil, code: "Native Event Error", message: "Failed to send native event", error: nil)
+                    self.handleError(component: component, reject: RNAdyenModule.context?.reject, code: "Native Event Error", message: "Failed to send native event", error: nil)
                 }
             } catch let error {
                 print("RNAdyenModule Error:", error)
-                self.handleError(component: component, reject: nil, code: "Native Event Error", message: "Failed to send native event", error: error)
+                self.handleError(component: component, reject: RNAdyenModule.context?.reject, code: "Native Event Error", message: "Failed to send native event", error: error)
             }
-        }
-    }
-
-    private func handleError(component: DropInComponent, reject: RCTPromiseRejectBlock?, code: String, message: String, error: Error?) {
-        if let reject = reject {
-            reject(code, message, error)
-        }
-
-        self.dismissDropInComponent(dropInComponent: component, animated: true) {
-            RNAdyenModule.context = nil
         }
     }
 
@@ -541,32 +553,15 @@ extension RNAdyenModule: DropInComponentDelegate {
     }
 
     func didFail(with error: Error, from component: DropInComponent) {
-        if let context = RNAdyenModule.context {
-            context.reject("Unknown Error", error.localizedDescription, error)
-        }
-
-        self.dismissDropInComponent(dropInComponent: component, animated: true) {
-            RNAdyenModule.context = nil
-        }
+        print("RNAdyenModule Error:", error)
+        self.handleError(component: component, reject: RNAdyenModule.context?.reject, code: "didFail", message: error.localizedDescription, error: error)
     }
 
     func didCancel(component: PaymentComponent, from dropInComponent: DropInComponent) {
-        // do nothing
+        self.handleError(component: dropInComponent, reject: RNAdyenModule.context?.reject, code: "didCanel", message: "User did cancel", error: nil)
     }
 
     func didOpenExternalApplication(_ component: DropInComponent) {
-        // do nothing
-    }
-
-    private func dismissDropInComponent(dropInComponent: DropInComponent, animated: Bool, completion: (() -> Void)? = nil) {
-        let viewController = dropInComponent.viewController
-
-        if let presentedViewController = viewController.presentedViewController {
-            presentedViewController.dismiss(animated: animated) {
-                viewController.dismiss(animated: animated, completion: completion)
-            }
-        } else {
-            viewController.dismiss(animated: animated, completion: completion)
-        }
+        // do nothing?
     }
 }
