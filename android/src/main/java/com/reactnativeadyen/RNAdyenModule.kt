@@ -439,7 +439,7 @@ class RNAdyenModule(private var reactContext: ReactApplicationContext) : ReactCo
     }
 
     override fun onNewIntent(intent: Intent?) {
-        TODO("Not yet implemented")
+        // do nothing?
     }
 
     private fun jsResponseToDropInServiceResult(response: ReadableMap): DropInServiceResult {
