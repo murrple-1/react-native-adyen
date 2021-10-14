@@ -1,7 +1,7 @@
 {
   "name": "@murrple_1/react-native-adyen",
   "podName": "react-native-adyen",
-  "version": "0.3.11",
+  "version": "0.3.12",
   "description": "React Native Adyen Module",
   "homepage": "https://github.com/murrple-1/react-native-adyen#readme",
   "main": "lib/index.js",
