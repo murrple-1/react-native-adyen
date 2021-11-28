@@ -12,7 +12,7 @@ export function _setVerbose(verbose_: boolean) {
 
 export const paymentMethods = async (req: Request, res: Response) => {
   if (verbose) {
-    console.log('JSON Request Body:', JSON.stringify(req.body, null, 2));
+    console.log('JSON Request Body:', req.body);
   }
 
   const { countryCode, amount, shopperReference, channel } = req.body;
@@ -45,8 +45,11 @@ export const paymentMethods = async (req: Request, res: Response) => {
   } catch (e: unknown) {
     const axiosError = e as AxiosError;
     if (axiosError.response) {
-      res.statusCode = axiosError.response.status;
-      res.send(axiosError.response.data);
+      if (verbose) {
+        console.error('JSON Error Response Body:', axiosError.response.data);
+      }
+
+      res.status(axiosError.response.status).send(axiosError.response.data);
     } else {
       console.error(e);
 
@@ -58,7 +61,7 @@ export const paymentMethods = async (req: Request, res: Response) => {
 
 export const payments = async (req: Request, res: Response) => {
   if (verbose) {
-    console.log('JSON Request Body:', JSON.stringify(req.body, null, 2));
+    console.log('JSON Request Body:', req.body);
   }
 
   const { amount, paymentMethod, reference, returnUrl } = req.body;
@@ -90,8 +93,11 @@ export const payments = async (req: Request, res: Response) => {
   } catch (e: unknown) {
     const axiosError = e as AxiosError;
     if (axiosError.response) {
-      res.statusCode = axiosError.response.status;
-      res.send(axiosError.response.data);
+      if (verbose) {
+        console.error('JSON Error Response Body:', axiosError.response.data);
+      }
+
+      res.status(axiosError.response.status).send(axiosError.response.data);
     } else {
       console.error(e);
 
@@ -103,7 +109,7 @@ export const payments = async (req: Request, res: Response) => {
 
 export const paymentsDetails = async (req: Request, res: Response) => {
   if (verbose) {
-    console.log('JSON Request Body:', JSON.stringify(req.body, null, 2));
+    console.log('JSON Request Body:', req.body);
   }
 
   try {
@@ -127,8 +133,11 @@ export const paymentsDetails = async (req: Request, res: Response) => {
   } catch (e: unknown) {
     const axiosError = e as AxiosError;
     if (axiosError.response) {
-      res.statusCode = axiosError.response.status;
-      res.send(axiosError.response.data);
+      if (verbose) {
+        console.error('JSON Error Response Body:', axiosError.response.data);
+      }
+
+      res.status(axiosError.response.status).send(axiosError.response.data);
     } else {
       console.error(e);
 
