@@ -1,4 +1,4 @@
-import { RequestHandler } from 'express';
+import { Request, Response } from 'express';
 
 import axios, { AxiosError } from 'axios';
 
@@ -10,7 +10,7 @@ export function _setVerbose(verbose_: boolean) {
   verbose = verbose_;
 }
 
-export const paymentMethods: RequestHandler = async (req, res) => {
+export const paymentMethods = async (req: Request, res: Response) => {
   if (verbose) {
     console.log('JSON Request Body:', JSON.stringify(req.body, null, 2));
   }
@@ -56,7 +56,7 @@ export const paymentMethods: RequestHandler = async (req, res) => {
   }
 };
 
-export const payments: RequestHandler = async (req, res) => {
+export const payments = async (req: Request, res: Response) => {
   if (verbose) {
     console.log('JSON Request Body:', JSON.stringify(req.body, null, 2));
   }
@@ -101,7 +101,7 @@ export const payments: RequestHandler = async (req, res) => {
   }
 };
 
-export const paymentsDetails: RequestHandler = async (req, res) => {
+export const paymentsDetails = async (req: Request, res: Response) => {
   if (verbose) {
     console.log('JSON Request Body:', JSON.stringify(req.body, null, 2));
   }

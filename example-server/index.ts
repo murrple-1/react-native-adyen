@@ -2,8 +2,6 @@ import express from 'express';
 
 import { addAsync } from '@awaitjs/express';
 
-import { json as jsonBodyParser_ } from 'body-parser';
-
 import morgan from 'morgan';
 
 import yargs from 'yargs/yargs';
@@ -43,12 +41,11 @@ const express_ = express();
 const app = addAsync(express_);
 
 app.use(morgan('dev'));
+app.use(express.json());
 
-const jsonBodyParser = jsonBodyParser_();
-
-app.postAsync('/paymentMethods', jsonBodyParser, paymentMethods);
-app.postAsync('/payments', jsonBodyParser, payments);
-app.postAsync('/payments/details', jsonBodyParser, paymentsDetails);
+app.postAsync('/paymentMethods', paymentMethods);
+app.postAsync('/payments', payments);
+app.postAsync('/payments/details', paymentsDetails);
 
 app.listen(args.port, args.hostname, () => {
   console.log(
