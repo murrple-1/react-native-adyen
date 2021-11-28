@@ -25,9 +25,11 @@ object ReactNativeFlipper {
             client.addPlugin(DatabasesFlipperPlugin(context))
             client.addPlugin(SharedPreferencesFlipperPlugin(context))
             client.addPlugin(CrashReporterPlugin.getInstance())
+
             val networkFlipperPlugin = NetworkFlipperPlugin()
             NetworkingModule.setCustomClientBuilder { builder -> builder.addNetworkInterceptor(FlipperOkhttpInterceptor(networkFlipperPlugin)) }
             client.addPlugin(networkFlipperPlugin)
+
             client.start()
 
             // Fresco Plugin needs to ensure that ImagePipelineFactory is initialized
