@@ -468,4 +468,14 @@ class RNAdyenModule(private var reactContext: ReactApplicationContext) : ReactCo
             }
         }
     }
+
+    @ReactMethod
+    fun addListener(eventName: String) {
+        // Keep: Required for RN built-in Event Emitter Calls.
+    }
+
+    @ReactMethod
+    fun removeListeners(count: Double) {
+        // Keep: Required for RN built-in Event Emitter Calls.
+    }
 }
