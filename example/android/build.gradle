@@ -6,11 +6,12 @@ buildscript {
         minSdkVersion = 21
         compileSdkVersion = 30
         targetSdkVersion = 30
-        kotlinVersion = '1.5.0'
+        kotlinVersion = '1.4.32'
         ndkVersion = '22.0.7026061'
     }
     repositories {
         google()
+        jcenter()
         mavenCentral()
     }
     dependencies {
