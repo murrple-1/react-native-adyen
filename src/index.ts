@@ -558,7 +558,7 @@ export interface StartPaymentOptions {
   /**
    * Options to customize the Google Pay component. Used by Android.
    */
-  googlePayOptions?: {};
+  googlePayOptions?: Record<string, never>;
   /**
    * Options to customize the Apple Pay component. Used by iOS.
    */
