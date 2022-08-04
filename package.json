@@ -18,7 +18,7 @@
     "compile": "rm -rf lib && tsc -p .",
     "lint-es": "eslint . --ext .js,.jsx,.ts,.tsx",
     "lint-swift": "swiftlint lint",
-    "lint-kt": "ktlint --color --android \"android/**/*.kt\"",
+    "lint-kt": "ktlint --color \"android/**/*.kt\"",
     "prepare": "husky install && yarn compile"
   },
   "devDependencies": {

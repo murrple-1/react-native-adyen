@@ -1,4 +1,5 @@
 [*.{kt,kts}]
+ktlint_code_style = android
 max_line_length=off
 
 [android/src/main/java/com/reactnativeadyen/RNAdyenModule.kt]
